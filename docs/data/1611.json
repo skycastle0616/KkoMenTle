@@ -1,0 +1,18 @@
+{
+ "id": 1611,
+ "date": "2026-08-29",
+ "answer_b64": "7IaN7J2064uk",
+ "first_score": 39.19,
+ "fairness": 1.0,
+ "semantic_match": 0,
+ "q_match": 0.042,
+ "q_word": 1.0,
+ "playable": 4,
+ "grade": "red",
+ "weakest": "match",
+ "reduced": false,
+ "dead_cards": [],
+ "fairness_reason_b64": "",
+ "match_reason_b64": "7Jyg7IKs64+EIOyDgeychCDri6jslrQg66qp66Gd7J20IOyDneusvCDrtoTslbwg64uo7Ja0IOychOyjvOuhnCDqtazshLHrkJjslrQg7J6I7Ja0IOygleuLteydmCDsi6TsoJwg65y77J24IOq4sOunjOydtOuCmCDsho3snoTsiJjsmYAg7Ya17ZWY64qUIOuLqOyWtOqwgCDtlZjrgpjrj4Qg7JeG7Iq164uI64ukLg==",
+ "built_at": "2026-08-29T06:58:44+09:00"
+}

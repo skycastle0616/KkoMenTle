@@ -7,11 +7,16 @@ on:
     - cron: '5 15 * * *'
   workflow_dispatch:
 
+# GITHUB_TOKEN 으로 만든 커밋은 다른 워크플로를 트리거하지 않는다. 그래서 브랜치 기반
+# Pages 는 이 커밋에 반응하지 않는다. 배포까지 이 워크플로가 직접 한다.
+# → Settings → Pages → Source 는 "GitHub Actions" 여야 한다.
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
-  group: daily
+  group: pages
   cancel-in-progress: false
 
 jobs:
@@ -32,7 +37,8 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python build.py --out docs
 
-      - name: 변경 있으면 커밋
+      # 배포는 아티팩트로 하지만, docs/data/*.json 은 커밋해야 다음 날 기록이 쌓인다.
+      - name: 기록 커밋
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -43,3 +49,19 @@ jobs:
             git commit -m "build: $(TZ=Asia/Seoul date +%F) [skip ci]"
             git push
           fi
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

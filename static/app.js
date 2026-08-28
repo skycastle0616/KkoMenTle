@@ -13,6 +13,18 @@
     if (navigator.vibrate) { try { navigator.vibrate(ms); } catch (e) {} }
   }
 
+  /* ------------------------------------------------ 갱신 실패 감지 */
+
+  // 빌드가 실패하면 어제 페이지가 그대로 남는다. 방문자가 그걸 오늘 판정으로 읽으면 안 된다.
+  function kstToday() {
+    return new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
+  }
+
+  var stale = document.getElementById('stale');
+  if (stale && body.dataset.date && body.dataset.date !== kstToday()) {
+    stale.hidden = false;
+  }
+
   /* ------------------------------------------------ 열림 상태 (회차별) */
 
   function load() {

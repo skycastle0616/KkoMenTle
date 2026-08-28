@@ -13,7 +13,8 @@
 <link rel="stylesheet" href="style.css?d={{ puzzle_id }}">
 <script>document.documentElement.className += " js";</script>
 </head>
-<body data-puzzle="{{ puzzle_id }}" data-total="{{ total }}" data-grade="{{ verdict.grade }}">
+<body data-puzzle="{{ puzzle_id }}" data-total="{{ total }}" data-grade="{{ verdict.grade }}"
+      data-date="{{ date }}">
 
 <div class="progress" id="progress">
   <div class="progress-fill" id="progress-fill"></div>
@@ -21,6 +22,10 @@
 </div>
 
 <main>
+
+  <p class="stale" id="stale" hidden>
+    오늘 판정이 아직 갱신되지 않았습니다 — 아래는 {{ date_label }} 회차입니다
+  </p>
 
   <p class="yesterday">
     {% if previous %}어제 정답은 <b>{{ previous }}</b> 였습니다.{% else %}꼬맨틀 {{ puzzle_id }}회차 · {{ date_label }}{% endif %}

@@ -1,10 +1,13 @@
 """오늘 문제가 풀 만한지 판별한다.
 
 축이 둘이다.
-  q_word  — 단어를 후보로 떠올릴 수 있는가      (`네거리` 유형: 생소어)
+  q_word  — 정답으로 내걸기에 공정한 단어인가   (방언·고어·비표준 표기)
   q_match — 유사도가 정답의 뜻을 따라가는가     (`속이다` 유형: 임베딩 붕괴)
 
-둘을 더하지 않고 min() 을 쓴다. `속이다`는 흔한 말이라 familiarity 가 1.0 이고,
+q_word 는 '떠올리기 쉬운가'가 아니다. 떠올리는 데 오래 걸리는 건 난이도이고 그게 게임의
+재미다. 여기서 재는 건 그 단어를 정답으로 삼는 것 자체가 부당한가다.
+
+둘을 더하지 않고 min() 을 쓴다. `속이다`는 멀쩡한 표준어라 fairness 가 1.0 이고,
 합산하면 점수를 그냥 먹고 등급이 올라가버린다. 하나만 망가져도 추천하면 안 된다.
 """
 from __future__ import annotations
@@ -21,7 +24,7 @@ GRADES = [
 
 SUBLINE = {
     "match": "유사도가 정답의 뜻을 배신하는 날입니다",
-    "word": "단어 자체를 떠올리기 어려운 날입니다",
+    "word": "정답으로 내걸기엔 공정하지 않은 단어입니다",
     "reduced": "유사도 점수만으로 매긴 임시 판정입니다",
 }
 
@@ -39,14 +42,14 @@ def grade_of(playable: float) -> tuple[str, str, str]:
 
 def judge(
     first_score: float,
-    familiarity: float | None,
+    fairness: float | None,
     semantic_match: int | None,
     verdict_line: str | None = None,
 ) -> dict:
-    """first_score 는 0~100. familiarity/semantic_match 가 없으면 축소 판정."""
+    """first_score 는 0~100. fairness/semantic_match 가 없으면 축소 판정."""
     first_norm = norm(first_score, FIRST_LO, FIRST_HI)
 
-    if familiarity is None or semantic_match is None:
+    if fairness is None or semantic_match is None:
         q_match = first_norm
         q_word = None
         playable = 100 * q_match
@@ -54,7 +57,7 @@ def judge(
     else:
         match_ratio = semantic_match / SAMPLE_N
         q_match = 0.65 * match_ratio + 0.35 * first_norm
-        q_word = float(familiarity)
+        q_word = float(fairness)
         playable = 100 * min(q_match, q_word)
         weakest = "match" if q_match < q_word else "word"
 
@@ -72,7 +75,7 @@ def judge(
         "q_word": None if q_word is None else round(q_word, 3),
         "first_score": round(first_score, 2),
         "semantic_match": semantic_match,
-        "familiarity": familiarity,
+        "fairness": fairness,
         "reduced": q_word is None,
     }
 
@@ -102,11 +105,11 @@ def reasons(v: dict) -> list[str]:
     elif n <= 9:
         out.append("상위권에 결이 다른 단어가 꽤 섞여 있습니다")
 
-    fam = v["familiarity"]
-    if fam is not None:
-        if fam < 0.5:
-            out.append("정답 단어 자체를 후보로 떠올리기가 쉽지 않습니다")
-        elif fam < 0.75:
-            out.append("정답 단어가 아주 흔한 말은 아닙니다")
+    fair = v["fairness"]
+    if fair is not None:
+        if fair < 0.5:
+            out.append("정답 단어가 오늘날의 표준어라고 보기 어렵습니다")
+        elif fair < 0.8:
+            out.append("정답 단어가 표준어이긴 하나 지금은 다른 말에 거의 밀려났습니다")
 
     return out

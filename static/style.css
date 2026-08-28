@@ -92,6 +92,23 @@ main {
   letter-spacing: .02em;
 }
 
+/* ---------------------------------------------------------------- 갱신 실패 */
+
+.stale {
+  margin: 14px 0 0;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--orange) 35%, var(--line));
+  background: color-mix(in srgb, var(--orange) 10%, transparent);
+  color: var(--orange);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  word-break: keep-all;
+}
+
+.stale[hidden] { display: none; }
+
 /* ---------------------------------------------------------------- 헤더 */
 
 .yesterday {

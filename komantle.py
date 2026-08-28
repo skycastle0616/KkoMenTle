@@ -45,8 +45,16 @@ def now_kst() -> dt.datetime:
     return dt.datetime.now(KST)
 
 
+def scaled(top_scores: list) -> list[tuple[int, str, float]]:
+    """[(순위, 단어, 0~100 점수)]. 거르지 않은 원본 — 판정은 이걸 봐야 한다."""
+    return [(rank, word, round(score * 100, 2)) for rank, word, score in top_scores]
+
+
 def filter_neighbors(answer: str, top_scores: list) -> list[tuple[int, str, float]]:
     """정답을 품거나 정답에 품히는 단어는 노출 즉시 정답 공개라 걷어낸다.
+
+    힌트 카드 전용이다. 판정에는 쓰지 마라 — `부위원장`처럼 뜻이 제대로 통하는
+    형태적 이웃까지 사라져서 semantic_match 가 왜곡된다.
 
     반환은 [(원래 순위, 단어, 0~100 점수)] 이며 원래 순위를 유지한다.
     """

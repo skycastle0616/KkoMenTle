@@ -7,10 +7,14 @@ from __future__ import annotations
 
 import json
 import os
+import time
 
 import requests
 
 MODELS = ["gemini-3.6-flash", "gemini-3.5-flash"]
+# 무료 티어는 분당 요청 수가 얕아서 429 가, 가끔 503 도 튄다. 하루 한 번뿐인 빌드가
+# 일시적 오류로 축소 판정에 빠지면 손해라 라운드 사이를 띄우고 다시 돈다.
+BACKOFF = (0, 15, 30)
 ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 TIMEOUT = 90
 SAMPLE_N = 16
@@ -37,21 +41,24 @@ def _call(prompt: str, temperature: float, schema: dict) -> dict:
             "responseSchema": schema,
         },
     }
-    last = None
-    for model in MODELS:
-        try:
-            r = requests.post(
-                ENDPOINT.format(model=model),
-                headers={"Content-Type": "application/json", "x-goog-api-key": key},
-                json=body,
-                timeout=TIMEOUT,
-            )
-            r.raise_for_status()
-            text = r.json()["candidates"][0]["content"]["parts"][0]["text"]
-            return json.loads(text)
-        except Exception as exc:  # 모델 폐기·일시 오류 → 다음 모델로
-            last = f"{model}: {type(exc).__name__} {exc}"
-    raise GeminiError(last or "호출 실패")
+    errors = []
+    for wait in BACKOFF:
+        if wait:
+            time.sleep(wait)
+        for model in MODELS:
+            try:
+                r = requests.post(
+                    ENDPOINT.format(model=model),
+                    headers={"Content-Type": "application/json", "x-goog-api-key": key},
+                    json=body,
+                    timeout=TIMEOUT,
+                )
+                r.raise_for_status()
+                text = r.json()["candidates"][0]["content"]["parts"][0]["text"]
+                return json.loads(text)
+            except Exception as exc:  # 모델 폐기·할당량·일시 오류 → 다음 모델로
+                errors.append(f"{model}: {type(exc).__name__} {exc}")
+    raise GeminiError(" | ".join(errors[-len(MODELS):]) or "호출 실패")
 
 
 # ---------------------------------------------------------------- 누출 가드
@@ -91,15 +98,15 @@ def cloze_ok(cloze: str, answer: str) -> bool:
 JUDGE_SCHEMA = {
     "type": "object",
     "properties": {
-        "familiarity": {"type": "number"},
-        "familiarity_reason": {"type": "string"},
+        "fairness": {"type": "number"},
+        "fairness_reason": {"type": "string"},
         "semantic_match": {"type": "integer"},
         "match_reason": {"type": "string"},
         "verdict_line": {"type": "string"},
     },
     "required": [
-        "familiarity",
-        "familiarity_reason",
+        "fairness",
+        "fairness_reason",
         "semantic_match",
         "match_reason",
         "verdict_line",
@@ -116,17 +123,21 @@ JUDGE_PROMPT = """너는 한국어 단어 유사도 게임 '꼬맨틀'의 오늘
 
 다음을 매겨라.
 
-familiarity (0.0~1.0)
-  이 단어가 게임 정답으로 나왔을 때 일반 한국인이 스스로 후보로 떠올릴 수 있는 정도.
-  뜻을 아는지가 아니라 떠올릴 수 있는지가 기준이다.
-  더 흔하게 쓰이는 동의어가 있으면 크게 깎아라 (예: '사거리'가 훨씬 흔하므로 '네거리'는 0.5 이하).
-  지역어·고어·문어체 전용·전문용어·낯선 복합어면 낮게. 일상에서 매일 쓰는 말이면 0.9 이상.
+fairness (0.0~1.0)
+  이 단어를 '오늘날의 표준 한국어'로서 게임 정답에 내걸기에 공정한가.
+  ★ 떠올리기까지 오래 걸리는 것은 난이도이고 그 자체가 게임의 재미다. 그건 깎지 마라.
+    깎아야 할 것은 정답으로 삼는 것 자체가 부당한 경우뿐이다.
+  1.0      현대 표준어. 사전에 있고 지금도 평범하게 쓰인다. 흔하지 않아도 여기 해당한다.
+  0.6~0.8  표준어이긴 하나 현대 한국어에서 다른 말에 거의 밀려났다.
+           (예: '네거리' — '사거리'가 사실상 대체했다)
+  0.3~0.5  지역 방언, 특정 분야 전문용어, 문어체 전용, 사전에만 남은 말.
+  0.0~0.2  고어·폐어, 비표준 표기, 사람들이 하나의 낱말로 인식하지 않는 형태.
 
 semantic_match (0~{n} 정수)
   위 목록 {n}개 중 정답의 '실제 뜻'과 의미적으로 통하는 단어의 개수.
   형태만 닮고 뜻이 다른 것, 엉뚱한 분야로 튄 것, 고유명사·지명은 세지 마라.
 
-familiarity_reason / match_reason
+fairness_reason / match_reason
   각각 한 문장. 채점 근거.
 
 verdict_line
@@ -145,11 +156,11 @@ def judge_signals(answer: str, neighbors: list) -> dict:
         temperature=0.3,
         schema=JUDGE_SCHEMA,
     )
-    out["familiarity"] = max(0.0, min(1.0, float(out["familiarity"])))
+    out["fairness"] = max(0.0, min(1.0, float(out["fairness"])))
     out["semantic_match"] = max(0, min(SAMPLE_N, int(out["semantic_match"])))
 
     terms = leak_terms(answer)
-    for field in ("verdict_line", "familiarity_reason", "match_reason"):
+    for field in ("verdict_line", "fairness_reason", "match_reason"):
         if leaks(out.get(field, ""), terms):
             out[field] = ""
     return out

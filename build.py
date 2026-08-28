@@ -143,8 +143,9 @@ def main() -> int:
         print(f"[중단] {puzzle_id}회차는 {puz_date} 문제인데 오늘은 {today} 다", file=sys.stderr)
         return 1
 
-    neighbors = komantle.filter_neighbors(answer, puzzle["top_scores"])
-    first_score = round(puzzle["top_scores"][0][2] * 100, 2)
+    judge_sample = komantle.scaled(puzzle["top_scores"])            # 판정 — 원본 상위권
+    neighbors = komantle.filter_neighbors(answer, puzzle["top_scores"])  # 힌트 — 정답 조각 제거
+    first_score = judge_sample[0][2]
 
     try:
         previous = komantle.fetch_puzzle(puzzle_id - 1)["key"]
@@ -157,8 +158,8 @@ def main() -> int:
         print(f"[알림] {note} → 판정 축소, LLM 카드 비활성")
     else:
         try:
-            signals = hints.judge_signals(answer, neighbors)
-            print(f"[판정] familiarity={signals['familiarity']} "
+            signals = hints.judge_signals(answer, judge_sample)
+            print(f"[판정] fairness={signals['fairness']} "
                   f"semantic_match={signals['semantic_match']}/{hints.SAMPLE_N}")
         except hints.GeminiError as exc:
             print(f"[경고] 판정 호출 실패 → 축소 판정으로 진행: {exc}", file=sys.stderr)
@@ -171,7 +172,7 @@ def main() -> int:
 
     v = verdict.judge(
         first_score,
-        signals.get("familiarity"),
+        signals.get("fairness"),
         signals.get("semantic_match"),
         signals.get("verdict_line") or None,
     )
@@ -201,7 +202,7 @@ def main() -> int:
         "date": puz_date.isoformat(),
         "answer_b64": ctx["answer_b64"],
         "first_score": first_score,
-        "familiarity": v["familiarity"],
+        "fairness": v["fairness"],
         "semantic_match": v["semantic_match"],
         "q_match": v["q_match"],
         "q_word": v["q_word"],
@@ -210,7 +211,7 @@ def main() -> int:
         "weakest": v["weakest"],
         "reduced": v["reduced"],
         "dead_cards": dead,
-        "familiarity_reason": signals.get("familiarity_reason", ""),
+        "fairness_reason": signals.get("fairness_reason", ""),
         "match_reason": signals.get("match_reason", ""),
         "built_at": komantle.now_kst().isoformat(timespec="seconds"),
     }

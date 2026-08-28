@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>꼬맨틀 판정 기록</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#11131a">
+<link rel="stylesheet" href="style.css?d={{ puzzle_id }}">
+</head>
+<body class="page-archive">
+<main>
+  <p class="yesterday">지난 회차 기록</p>
+
+  {% if rows %}
+  <table class="archive">
+    <thead><tr><th>회차</th><th>날짜</th><th>정답</th><th>판정</th></tr></thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td class="a-id">{{ r.id }}</td>
+        <td class="a-date">{{ r.date[5:] }}</td>
+        <td class="a-word">{{ r.answer }}</td>
+        <td class="a-score sp-{{ r.grade }}"><b>{{ r.playable }}</b>{% if r.reduced %} <small>축소</small>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="archive-note">판정은 두 축의 최솟값이다 — 유사도가 뜻을 따라가는가(q_match), 단어를 떠올릴 수 있는가(q_word).</p>
+  {% else %}
+  <p class="archive-note">아직 쌓인 기록이 없습니다. 꼬맨틀 API가 3일치만 열어주기 때문에 과거 회차는 채울 수 없고, 오늘부터 하루씩 쌓입니다.</p>
+  {% endif %}
+
+  <footer>
+    <a href="index.html?d={{ puzzle_id }}">← 오늘 판정으로</a>
+    <span>{{ built_at }} KST 갱신</span>
+  </footer>
+</main>
+</body>
+</html>

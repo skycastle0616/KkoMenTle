@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>꼬맨틀 {{ puzzle_id }} · {{ verdict.headline }}</title>
+<meta name="description" content="오늘 꼬맨틀이 풀 만한 문제인지 판정하고, 원하는 만큼만 열어보는 힌트를 준다.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="꼬맨틀 {{ puzzle_id }} · {{ verdict.headline }}">
+<meta property="og:description" content="난이도 판정과 힌트 {{ total }}장">
+<meta property="og:url" content="https://skycastle0616.github.io/KkoMenTle/">
+<meta name="theme-color" content="#11131a">
+<link rel="stylesheet" href="style.css?d={{ puzzle_id }}">
+<script>document.documentElement.className += " js";</script>
+</head>
+<body data-puzzle="{{ puzzle_id }}" data-total="{{ total }}" data-grade="{{ verdict.grade }}">
+
+<div class="progress" id="progress">
+  <div class="progress-fill" id="progress-fill"></div>
+  <div class="progress-text"><span id="progress-count">0</span> / {{ total }}</div>
+</div>
+
+<main>
+
+  <p class="yesterday">
+    {% if previous %}어제 정답은 <b>{{ previous }}</b> 였습니다.{% else %}꼬맨틀 {{ puzzle_id }}회차 · {{ date_label }}{% endif %}
+  </p>
+
+  <section class="hero hero-{{ verdict.grade }}">
+    <div class="hero-badge">{{ verdict.badge }}</div>
+    <h1 class="hero-headline">{{ verdict.headline }}</h1>
+    <p class="hero-sub">{{ verdict.subline }}</p>
+    <div class="hero-score"><b>{{ verdict.playable }}</b><span>/ 100</span></div>
+  </section>
+
+  <section class="why reveal">
+    <h2>왜?</h2>
+    <ul>
+      {% for r in reasons %}<li>{{ r }}</li>{% endfor %}
+    </ul>
+  </section>
+
+  <div class="actions reveal">
+    <a class="btn btn-primary" href="{{ game_url }}" target="_blank" rel="noopener">꼬맨틀 하러 가기</a>
+    <a class="btn btn-ghost" href="#hints">힌트 보기 ↓</a>
+  </div>
+
+  <div class="rule" id="hints"><span>힌트 · 원하는 것만 열어보세요</span></div>
+
+  {% for c in cards %}
+  <article class="card sp-{{ c.spoiler }}{% if not c.active %} card-dead{% endif %} reveal"
+           id="card-{{ c.id }}"{% if c.active %} data-card="{{ c.id }}" tabindex="0" role="button"
+           aria-expanded="false" aria-label="{{ c.title }} 힌트 열기"{% endif %}>
+    <header class="card-head">
+      <span class="card-n">{{ c.n }}</span>
+      <span class="card-title">{{ c.title }}</span>
+      <span class="card-spoiler">스포 {{ c.spoiler_label }}</span>
+    </header>
+
+    {% if not c.active %}
+    <div class="card-body card-body-dead"><p class="c-text">오늘은 이 카드를 만들지 못했습니다.</p></div>
+    {% else %}
+    <div class="card-body">
+      {% if c.kind == 'emoji' %}
+        <p class="c-emoji">{{ c.value }}</p>
+      {% elif c.kind == 'big' %}
+        <p class="c-big">{{ c.value }}</p>
+      {% elif c.kind == 'list' %}
+        <ol class="c-list">{% for s in c.value %}<li>{{ s }}</li>{% endfor %}</ol>
+      {% elif c.kind == 'qa' %}
+        <ul class="c-qa">{% for q in c.value %}<li><span class="q">{{ q.q }}</span><span class="a">{{ q.a }}</span></li>{% endfor %}</ul>
+      {% elif c.kind == 'words' %}
+        <ul class="c-words">{% for w in c.value %}<li><b>{{ w.word }}</b><span>{{ '%.2f'|format(w.score) }}</span></li>{% endfor %}</ul>
+      {% else %}
+        <p class="c-text">{{ c.value }}</p>
+      {% endif %}
+    </div>
+    {% endif %}
+  </article>
+  {% endfor %}
+
+  <article class="card card-answer sp-skull reveal" id="card-answer"
+           data-answer="{{ answer_b64 }}" data-len="{{ answer_len }}"
+           tabindex="0" role="button" aria-expanded="false" aria-label="정답 열기">
+    <header class="card-head">
+      <span class="card-n">💀</span>
+      <span class="card-title">정답</span>
+      <span class="card-spoiler">길게 누르기</span>
+    </header>
+    <div class="answer-press">
+      <svg class="ring" viewBox="0 0 48 48" aria-hidden="true">
+        <circle class="ring-bg" cx="24" cy="24" r="21"></circle>
+        <circle class="ring-fill" cx="24" cy="24" r="21"></circle>
+      </svg>
+      <span class="answer-hint">0.6초 길게 누르면 열립니다</span>
+    </div>
+    <div class="answer-shell"><div class="answer-inner"><p class="c-big" id="answer-text"></p></div></div>
+  </article>
+
+  <footer>
+    <a href="archive.html?d={{ puzzle_id }}">지난 회차 기록</a>
+    <span>{{ built_at }} KST 갱신 · {{ puzzle_id }}회차</span>
+  </footer>
+
+</main>
+
+<script src="app.js?d={{ puzzle_id }}"></script>
+</body>
+</html>

@@ -6,6 +6,11 @@ on:
     # Actions cron 은 수십 분 늦을 수 있는데, build.py 의 신선도 검증이 있어서 무해하다.
     - cron: '5 15 * * *'
   workflow_dispatch:
+    inputs:
+      rebuild:
+        description: '오늘 회차를 다시 빌드한다. 끄면 커밋된 docs/ 를 그대로 배포한다.'
+        type: boolean
+        default: true
 
 # GITHUB_TOKEN 으로 만든 커밋은 다른 워크플로를 트리거하지 않는다. 그래서 브랜치 기반
 # Pages 는 이 커밋에 반응하지 않는다. 배포까지 이 워크플로가 직접 한다.
@@ -32,13 +37,17 @@ jobs:
 
       - run: pip install -r requirements.txt
 
+      # Gemini 무료 티어는 모델당 하루 20회다. 할당량을 다 썼거나 코드만 고쳐 다시 올릴
+      # 때는 rebuild 를 끈다. 빌드 없이 커밋된 docs/ 가 그대로 배포된다.
       - name: 오늘 회차 빌드
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.rebuild }}
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python build.py --out docs
 
       # 배포는 아티팩트로 하지만, docs/data/*.json 은 커밋해야 다음 날 기록이 쌓인다.
       - name: 기록 커밋
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.rebuild }}
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'

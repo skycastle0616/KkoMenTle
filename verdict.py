@@ -22,7 +22,10 @@ GRADES = [
     (0, "red", "🔴", "오늘은 건너뛰세요"),
 ]
 
+# 판정 헤드라인 옆 문구는 전부 여기서 나온다. LLM 자유 문장을 쓰면 안 된다 —
+# "상위권이 어떤 성격으로 쏠렸는가"를 말하는 순간 정답의 분야가 그대로 새어나간다.
 SUBLINE = {
+    "green": "유사도가 정답의 뜻을 곧게 따라가는 날입니다",
     "match": "유사도가 정답의 뜻을 배신하는 날입니다",
     "word": "정답으로 내걸기엔 공정하지 않은 단어입니다",
     "reduced": "유사도 점수만으로 매긴 임시 판정입니다",
@@ -44,7 +47,6 @@ def judge(
     first_score: float,
     fairness: float | None,
     semantic_match: int | None,
-    verdict_line: str | None = None,
 ) -> dict:
     """first_score 는 0~100. fairness/semantic_match 가 없으면 축소 판정."""
     first_norm = norm(first_score, FIRST_LO, FIRST_HI)
@@ -62,8 +64,8 @@ def judge(
         weakest = "match" if q_match < q_word else "word"
 
     name, badge, headline = grade_of(playable)
-    # 🟢 인 날은 어느 축이 약한지 따질 게 없다. LLM 한 줄평을 그대로 쓴다.
-    subline = verdict_line if (name == "green" and verdict_line) else SUBLINE[weakest]
+    # 🟢 은 두 축 다 0.78 이상이라 약한 고리를 따질 게 없다.
+    subline = SUBLINE["green"] if name == "green" else SUBLINE[weakest]
     return {
         "playable": round(playable),
         "grade": name,

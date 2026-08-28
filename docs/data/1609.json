@@ -12,7 +12,7 @@
  "weakest": "match",
  "reduced": false,
  "dead_cards": [],
- "fairness_reason": "",
- "match_reason": "",
+ "fairness_reason_b64": "",
+ "match_reason_b64": "",
  "built_at": "2026-08-28T10:43:12+09:00"
 }

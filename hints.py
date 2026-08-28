@@ -12,8 +12,10 @@ import time
 import requests
 
 MODELS = ["gemini-3.6-flash", "gemini-3.5-flash"]
-# 무료 티어는 분당 요청 수가 얕아서 429 가, 가끔 503 도 튄다. 하루 한 번뿐인 빌드가
-# 일시적 오류로 축소 판정에 빠지면 손해라 라운드 사이를 띄우고 다시 돈다.
+# 하루 한 번뿐인 빌드가 일시적 5xx 로 축소 판정에 빠지면 손해라 라운드를 다시 돈다.
+# 429 에는 절대 재시도하지 않는다 — 무료 티어 할당량은 모델당 하루 20회
+# (GenerateRequestsPerDayPerProjectPerModel-FreeTier) 라서 기다려도 그날은 안 풀리고,
+# 재시도가 남은 할당량을 더 태운다.
 BACKOFF = (0, 15, 30)
 ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 TIMEOUT = 90
@@ -45,6 +47,7 @@ def _call(prompt: str, temperature: float, schema: dict) -> dict:
     for wait in BACKOFF:
         if wait:
             time.sleep(wait)
+        transient = False
         for model in MODELS:
             try:
                 r = requests.post(
@@ -56,8 +59,14 @@ def _call(prompt: str, temperature: float, schema: dict) -> dict:
                 r.raise_for_status()
                 text = r.json()["candidates"][0]["content"]["parts"][0]["text"]
                 return json.loads(text)
-            except Exception as exc:  # 모델 폐기·할당량·일시 오류 → 다음 모델로
+            except requests.HTTPError as exc:  # 모델 폐기(404)·할당량(429)은 다시 물어도 같다
+                errors.append(f"{model}: HTTP {exc.response.status_code}")
+                transient = transient or exc.response.status_code >= 500
+            except Exception as exc:  # 타임아웃·연결 끊김·응답 파싱 실패
                 errors.append(f"{model}: {type(exc).__name__} {exc}")
+                transient = True
+        if not transient:
+            break
     raise GeminiError(" | ".join(errors[-len(MODELS):]) or "호출 실패")
 
 
@@ -102,14 +111,12 @@ JUDGE_SCHEMA = {
         "fairness_reason": {"type": "string"},
         "semantic_match": {"type": "integer"},
         "match_reason": {"type": "string"},
-        "verdict_line": {"type": "string"},
     },
     "required": [
         "fairness",
         "fairness_reason",
         "semantic_match",
         "match_reason",
-        "verdict_line",
     ],
 }
 
@@ -138,12 +145,7 @@ semantic_match (0~{n} 정수)
   형태만 닮고 뜻이 다른 것, 엉뚱한 분야로 튄 것, 고유명사·지명은 세지 마라.
 
 fairness_reason / match_reason
-  각각 한 문장. 채점 근거.
-
-verdict_line
-  오늘 문제의 성격을 한 문장(공백 포함 40자 이내)으로.
-  ★ 정답이 무엇인지, 정답이 어떤 분야·주제의 말인지 절대 드러내지 마라.
-    유사도 목록이 정답의 뜻을 따라가는지 여부에 대해서만 말하라.
+  각각 한 문장. 채점 근거. 페이지에 노출되지 않고 보정용 기록으로만 남는다.
 """
 
 
@@ -160,7 +162,7 @@ def judge_signals(answer: str, neighbors: list) -> dict:
     out["semantic_match"] = max(0, min(SAMPLE_N, int(out["semantic_match"])))
 
     terms = leak_terms(answer)
-    for field in ("verdict_line", "fairness_reason", "match_reason"):
+    for field in ("fairness_reason", "match_reason"):
         if leaks(out.get(field, ""), terms):
             out[field] = ""
     return out

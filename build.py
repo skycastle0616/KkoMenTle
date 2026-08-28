@@ -42,6 +42,10 @@ def load_env() -> None:
             os.environ.setdefault(k.strip(), v.strip())
 
 
+def _b64(text: str) -> str:
+    return base64.b64encode(text.encode()).decode()
+
+
 def _pick(neighbors: list, slots: tuple) -> list:
     out = []
     for pos in slots:
@@ -174,7 +178,6 @@ def main() -> int:
         first_score,
         signals.get("fairness"),
         signals.get("semantic_match"),
-        signals.get("verdict_line") or None,
     )
     print(f"[결과] {v['playable']}점 {v['badge']} {v['headline']} / {v['subline']}")
 
@@ -211,8 +214,10 @@ def main() -> int:
         "weakest": v["weakest"],
         "reduced": v["reduced"],
         "dead_cards": dead,
-        "fairness_reason": signals.get("fairness_reason", ""),
-        "match_reason": signals.get("match_reason", ""),
+        # 채점 근거는 보정용으로만 남긴다. 정답의 분야를 그대로 말하는 문장이라
+        # 공개 파일에 평문으로 두면 그 자체가 스포일러다. 정답과 같은 취급을 한다.
+        "fairness_reason_b64": _b64(signals.get("fairness_reason", "")),
+        "match_reason_b64": _b64(signals.get("match_reason", "")),
         "built_at": komantle.now_kst().isoformat(timespec="seconds"),
     }
     with open(os.path.join(out_dir, "data", f"{puzzle_id}.json"), "w",

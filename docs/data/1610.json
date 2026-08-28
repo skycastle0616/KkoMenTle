@@ -4,15 +4,15 @@
  "answer_b64": "7JyE7JuQ7J6l",
  "first_score": 61.95,
  "fairness": 1.0,
- "semantic_match": 13,
- "q_match": 0.798,
+ "semantic_match": 16,
+ "q_match": 0.919,
  "q_word": 1.0,
- "playable": 80,
+ "playable": 92,
  "grade": "green",
  "weakest": "match",
  "reduced": false,
  "dead_cards": [],
- "fairness_reason": "",
- "match_reason": "특정 고유명사 기관이나 특정 정당 조직 등을 제외하면 직책과 조직에 연관된 단어들이 잘 도출되었습니다.",
- "built_at": "2026-08-28T10:57:55+09:00"
+ "fairness_reason_b64": "",
+ "match_reason_b64": "",
+ "built_at": "2026-08-28T11:20:45+09:00"
 }

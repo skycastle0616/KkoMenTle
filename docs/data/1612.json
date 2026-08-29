@@ -1,0 +1,18 @@
+{
+ "id": 1612,
+ "date": "2026-08-30",
+ "answer_b64": "7KO866y4",
+ "first_score": 52.95,
+ "fairness": 1.0,
+ "semantic_match": 15,
+ "q_match": 0.789,
+ "q_word": 1.0,
+ "playable": 79,
+ "grade": "green",
+ "weakest": "match",
+ "reduced": false,
+ "dead_cards": [],
+ "fairness_reason_b64": "",
+ "match_reason_b64": "",
+ "built_at": "2026-08-30T00:07:51+09:00"
+}

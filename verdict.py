@@ -13,7 +13,9 @@ q_word 는 '떠올리기 쉬운가'가 아니다. 떠올리는 데 오래 걸리
 from __future__ import annotations
 
 SAMPLE_N = 16          # LLM 에게 보여주는 유사도 상위 단어 개수
-FIRST_LO, FIRST_HI = 35.0, 70.0   # 1위 단어 점수 정규화 구간
+# 1위 단어 점수 정규화 구간. 실측 분포가 39~62 라 35~70 은 너무 넓어서
+# 중간값이 부당하게 낮게 깎였다.
+FIRST_LO, FIRST_HI = 38.0, 62.0
 
 GRADES = [
     (78, "green", "🟢", "오늘은 할 만합니다"),
@@ -26,9 +28,15 @@ GRADES = [
 # "상위권이 어떤 성격으로 쏠렸는가"를 말하는 순간 정답의 분야가 그대로 새어나간다.
 SUBLINE = {
     "green": "유사도가 정답의 뜻을 곧게 따라가는 날입니다",
-    "match": "유사도가 정답의 뜻을 배신하는 날입니다",
     "word": "정답으로 내걸기엔 공정하지 않은 단어입니다",
     "reduced": "유사도 점수만으로 매긴 임시 판정입니다",
+    # match 축은 같은 '어긋남'이어도 정도가 하늘과 땅이다. 10/16 인 날과 0/16 인 날에
+    # 같은 문장을 붙이면 🟡 이 실제보다 나쁘게 읽힌다.
+    "match": {
+        "yellow": "유사도가 정답의 뜻을 군데군데 놓치는 날입니다",
+        "orange": "유사도가 정답의 뜻을 자주 놓치는 날입니다",
+        "red": "유사도가 정답의 뜻을 배신하는 날입니다",
+    },
 }
 
 
@@ -58,14 +66,21 @@ def judge(
         weakest = "reduced"
     else:
         match_ratio = semantic_match / SAMPLE_N
-        q_match = 0.65 * match_ratio + 0.35 * first_norm
+        # 1위 점수 비중이 0.35 였는데, 천장이 낮은 것은 결함이 아니라 난이도다.
+        # 목록이 제대로 가리키면 낮은 천장에서도 수렴한다. 결함 신호인 match 에 무게를 준다.
+        q_match = 0.80 * match_ratio + 0.20 * first_norm
         q_word = float(fairness)
         playable = 100 * min(q_match, q_word)
         weakest = "match" if q_match < q_word else "word"
 
     name, badge, headline = grade_of(playable)
     # 🟢 은 두 축 다 0.78 이상이라 약한 고리를 따질 게 없다.
-    subline = SUBLINE["green"] if name == "green" else SUBLINE[weakest]
+    if name == "green":
+        subline = SUBLINE["green"]
+    elif weakest == "match":
+        subline = SUBLINE["match"][name]
+    else:
+        subline = SUBLINE[weakest]
     return {
         "playable": round(playable),
         "grade": name,
@@ -93,7 +108,7 @@ def reasons(v: dict) -> list[str]:
         return out
 
     n = v["semantic_match"]
-    out.append(f"유사도 상위 {SAMPLE_N}개 중 정답의 뜻과 통하는 단어 {n}개")
+    out.append(f"유사도 상위 {SAMPLE_N}개 중 정답 쪽을 가리키는 단어 {n}개")
 
     if first < 45:
         out.append(f"정답 바로 옆 단어조차 {first:.2f}점 — 근접해도 점수가 안 오릅니다")

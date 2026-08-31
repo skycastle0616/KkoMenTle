@@ -4,15 +4,15 @@
  "answer_b64": "7J6Q652864uk",
  "first_score": 45.92,
  "fairness": 1.0,
- "semantic_match": 5,
- "q_match": 0.312,
+ "semantic_match": 10,
+ "q_match": 0.566,
  "q_word": 1.0,
- "playable": 31,
- "grade": "red",
+ "playable": 57,
+ "grade": "yellow",
  "weakest": "match",
  "reduced": false,
  "dead_cards": [],
  "fairness_reason_b64": "",
- "match_reason_b64": "7IOB7JyEIDE26rCcIOuLqOyWtCDspJEg7KCV64u17J2YIO2ZnOyaqe2YleyduCAn7J6Q656AJ+ydhCDruYTroa/tlbQgJ+yLue2EsCcsICfshLHsnqXtlZjri6QnLCAn7YKk7Jqw64ukJywgJ+yXrOusvOyWtCcg65OxIOyLpOygnCDrnLsg67CPIOyDneyepSDqs7zsoJXqs7wg7J2Y66+47KCB7Jy866GcIO2Gte2VmOuKlCDri6jslrTripQgNeqwnOyeheuLiOuLpC4=",
- "built_at": "2026-08-31T00:07:46+09:00"
+ "match_reason_b64": "7IOB7JyEIOuLqOyWtCDspJEg7Zmc7Jqp7ZiVKOyekOuegCksIOuPmeydmOyWtCDrsI8g7IKs64+Z7Ja0KOyEseyepe2VmOuLpCwg7YKk7Jqw64ukKSwg7IOd7JWgIOuwjyDshLHsnqUg6rO87KCVIOq0gOugqOyWtCjsi7nthLAsIOuzgO2VmOuLpCwg7IOd7Zmc7ZWY64ukLCDtg5zslrTrgpgsIOqyveyeke2VmOuLpCwg7Jes66y87Ja0LCDsgrTslYTqsIDri6QpIOuTsSDstJ0gMTDqsJzqsIAg7KCV64u16rO8IOyXsOq0gOuQqeuLiOuLpC4=",
+ "built_at": "2026-08-31T10:14:39+09:00"
 }

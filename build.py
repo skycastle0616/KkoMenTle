@@ -176,7 +176,7 @@ def main() -> int:
 
     # 판정 표본 안에서 정답 어간을 그대로 품은 이웃 수. 어간만 본다 — 누출 가드가
     # 쓰는 접미사까지 넣으면 `가득히`의 `득히`에 `그득히` 같은 남남이 걸린다.
-    echo_terms = hints.stem_terms(answer)
+    echo_terms = komantle.stem_terms(answer)
     self_echo = sum(
         1 for _, w, _ in judge_sample[:hints.SAMPLE_N]
         if any(t in w for t in echo_terms)

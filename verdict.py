@@ -85,6 +85,9 @@ def judge(
         playable = 100 * min(q_match, q_word)
         weakest = "match" if q_match < q_word else "word"
 
+    # 화면에 나가는 값으로 등급을 매긴다. 반올림 전 값으로 매기면 77.8 이 🟡 인데
+    # 표시는 78 이라, 78+ 는 🟢 이라고 적어둔 기준과 어긋나 보인다.
+    playable = round(playable)
     name, badge, headline = grade_of(playable)
     # 🟢 은 두 축 다 0.78 이상이라 약한 고리를 따질 게 없다.
     if name == "green":
@@ -94,7 +97,7 @@ def judge(
     else:
         subline = SUBLINE[weakest]
     return {
-        "playable": round(playable),
+        "playable": playable,
         "grade": name,
         "badge": badge,
         "headline": headline,

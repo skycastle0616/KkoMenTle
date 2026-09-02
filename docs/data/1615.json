@@ -3,19 +3,19 @@
  "date": "2026-09-02",
  "answer_b64": "6rCA65Od7Z6I",
  "first_score": 53.41,
- "fairness": 1.0,
+ "fairness": 0.8,
  "semantic_match": 14,
  "semantic_match_eff": 12,
  "self_echo": 3,
  "pos_b64": "67aA7IKs",
  "q_match": 0.728,
- "q_word": 1.0,
+ "q_word": 0.8,
  "playable": 73,
  "grade": "yellow",
  "weakest": "match",
  "reduced": false,
  "dead_cards": [],
  "fairness_reason_b64": "",
- "match_reason_b64": "",
- "built_at": "2026-09-02T09:44:16+09:00"
+ "match_reason_b64": "J+uwmOynneyXrCcsICfssYTsg4ntlbQn66W8IOygnOyZuO2VnCAxNOqwnCDri6jslrTqsIAg66qo65GQIOyWkeyggeycvOuhnCDssKgg7J6I6rGw64KYIOyMk+yXrCDsnojripQg66qo7Iq17J2EIOucu+2VmOyXrCDsoJXri7XsnLzroZwg7Jyg7LaU7ZWY6riw7JeQIOy2qeu2hO2VqeuLiOuLpC4=",
+ "built_at": "2026-09-02T09:57:51+09:00"
 }

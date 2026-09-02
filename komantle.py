@@ -45,22 +45,39 @@ def now_kst() -> dt.datetime:
     return dt.datetime.now(KST)
 
 
+def stem_terms(answer: str) -> list[str]:
+    """정답과 그 어간(길이 2 이상 접두사). 파생형·첩어가 여기 걸린다.
+
+    `가득히` → `가득` 이면 `한가득·가득·가득가득` 이 잡힌다. 접미사는 넣지 않는다.
+    `가득히` 의 접미사 `득히` 를 넣으면 `그득히` 같은 남남까지 걸린다.
+    """
+    terms = {answer}
+    for i in range(2, len(answer)):
+        terms.add(answer[:i])
+    return sorted(terms, key=len, reverse=True)
+
+
 def scaled(top_scores: list) -> list[tuple[int, str, float]]:
     """[(순위, 단어, 0~100 점수)]. 거르지 않은 원본 — 판정은 이걸 봐야 한다."""
     return [(rank, word, round(score * 100, 2)) for rank, word, score in top_scores]
 
 
 def filter_neighbors(answer: str, top_scores: list) -> list[tuple[int, str, float]]:
-    """정답을 품거나 정답에 품히는 단어는 노출 즉시 정답 공개라 걷어낸다.
+    """정답 어간을 품거나 정답에 품히는 단어는 노출 즉시 정답 공개라 걷어낸다.
+
+    어간까지 보는 이유: 정답 `가득히` 에 `정답 in 단어` 만 쓰면 `한가득·가득가득` 이
+    그대로 살아남는다. 정답 `위원장` 이면 `상임위원·위원회` 가 살아남는데, 힌트
+    카드에 뜨는 순간 사실상 정답 공개다.
 
     힌트 카드 전용이다. 판정에는 쓰지 마라 — `부위원장`처럼 뜻이 제대로 통하는
     형태적 이웃까지 사라져서 semantic_match 가 왜곡된다.
 
     반환은 [(원래 순위, 단어, 0~100 점수)] 이며 원래 순위를 유지한다.
     """
+    terms = stem_terms(answer)
     out = []
     for rank, word, score in top_scores:
-        if answer in word or word in answer:
+        if word in answer or any(t in word for t in terms):
             continue
         out.append((rank, word, round(score * 100, 2)))
     return out

@@ -51,13 +51,25 @@ def grade_of(playable: float) -> tuple[str, str, str]:
     raise AssertionError
 
 
+def effective_match(semantic_match: int, self_echo: int) -> int:
+    """정답 어간이 그대로 든 이웃은 다 합쳐 한 개로만 센다.
+
+    `가득히` 날의 상위 16 에 `한가득·가득·가득가득` 이 있었다. 셋 다 정답이 자기를
+    메아리친 것이라 목록이 넓게 가리키는 것처럼 보이게 만든다. 자기반향은 이미 그
+    동네에 도착한 사람에게만 신호이고, 밖에서 들어오는 데는 아무 도움이 안 된다.
+    """
+    return max(0, semantic_match - max(0, self_echo - 1))
+
+
 def judge(
     first_score: float,
     fairness: float | None,
     semantic_match: int | None,
+    self_echo: int = 0,
 ) -> dict:
     """first_score 는 0~100. fairness/semantic_match 가 없으면 축소 판정."""
     first_norm = norm(first_score, FIRST_LO, FIRST_HI)
+    eff = None if semantic_match is None else effective_match(semantic_match, self_echo)
 
     if fairness is None or semantic_match is None:
         q_match = first_norm
@@ -65,7 +77,7 @@ def judge(
         playable = 100 * q_match
         weakest = "reduced"
     else:
-        match_ratio = semantic_match / SAMPLE_N
+        match_ratio = eff / SAMPLE_N
         # 1위 점수 비중이 0.35 였는데, 천장이 낮은 것은 결함이 아니라 난이도다.
         # 목록이 제대로 가리키면 낮은 천장에서도 수렴한다. 결함 신호인 match 에 무게를 준다.
         q_match = 0.80 * match_ratio + 0.20 * first_norm
@@ -92,6 +104,8 @@ def judge(
         "q_word": None if q_word is None else round(q_word, 3),
         "first_score": round(first_score, 2),
         "semantic_match": semantic_match,
+        "semantic_match_eff": eff,
+        "self_echo": self_echo,
         "fairness": fairness,
         "reduced": q_word is None,
     }
@@ -107,7 +121,9 @@ def reasons(v: dict) -> list[str]:
         out.append("힌트 생성이 실패해 유사도 점수만으로 매긴 판정입니다")
         return out
 
-    n = v["semantic_match"]
+    # 자기반향을 뺀 유효 개수를 말한다. 몇 개를 왜 뺐는지는 말하지 않는다 —
+    # "정답 어간이 든 말이 상위권에 셋 있다" 는 그 자체로 스포일러다.
+    n = v["semantic_match_eff"]
     out.append(f"유사도 상위 {SAMPLE_N}개 중 정답 쪽을 가리키는 단어 {n}개")
 
     if first < 45:

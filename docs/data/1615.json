@@ -5,14 +5,17 @@
  "first_score": 53.41,
  "fairness": 1.0,
  "semantic_match": 14,
- "q_match": 0.828,
+ "semantic_match_eff": 12,
+ "self_echo": 3,
+ "pos_b64": "67aA7IKs",
+ "q_match": 0.728,
  "q_word": 1.0,
- "playable": 83,
- "grade": "green",
+ "playable": 73,
+ "grade": "yellow",
  "weakest": "match",
  "reduced": false,
  "dead_cards": [],
  "fairness_reason_b64": "",
  "match_reason_b64": "",
- "built_at": "2026-09-02T00:14:10+09:00"
+ "built_at": "2026-09-02T09:44:16+09:00"
 }

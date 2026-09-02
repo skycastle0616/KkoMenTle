@@ -174,10 +174,21 @@ def main() -> int:
         except hints.GeminiError as exc:
             print(f"[경고] 힌트 호출 실패 → LLM 카드 전부 비활성: {exc}", file=sys.stderr)
 
+    # 판정 표본 안에서 정답 어간을 그대로 품은 이웃 수. 어간만 본다 — 누출 가드가
+    # 쓰는 접미사까지 넣으면 `가득히`의 `득히`에 `그득히` 같은 남남이 걸린다.
+    echo_terms = hints.stem_terms(answer)
+    self_echo = sum(
+        1 for _, w, _ in judge_sample[:hints.SAMPLE_N]
+        if any(t in w for t in echo_terms)
+    )
+    if self_echo > 1:
+        print(f"[할인] 정답 어간이 든 이웃 {self_echo}개 → semantic_match 에서 {self_echo - 1}개 뺀다")
+
     v = verdict.judge(
         first_score,
         signals.get("fairness"),
         signals.get("semantic_match"),
+        self_echo,
     )
     print(f"[결과] {v['playable']}점 {v['badge']} {v['headline']} / {v['subline']}")
 
@@ -207,6 +218,11 @@ def main() -> int:
         "first_score": first_score,
         "fairness": v["fairness"],
         "semantic_match": v["semantic_match"],
+        "semantic_match_eff": v["semantic_match_eff"],
+        "self_echo": v["self_echo"],
+        # 품사는 보정용 기록. "부사 날이 체계적으로 후하게 나오는가" 를 나중에 보려면
+        # 쌓여 있어야 한다. 힌트 카드 1장이라 정답과 같이 base64 로 넣는다.
+        "pos_b64": _b64(llm_cards.get("pos", "")),
         "q_match": v["q_match"],
         "q_word": v["q_word"],
         "playable": v["playable"],

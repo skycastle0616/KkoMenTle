@@ -72,17 +72,29 @@ def _call(prompt: str, temperature: float, schema: dict) -> dict:
 
 # ---------------------------------------------------------------- 누출 가드
 
+def stem_terms(answer: str) -> list[str]:
+    """정답과 그 어간(길이 2 이상 접두사). 파생형·첩어가 여기 걸린다.
+
+    `가득히` → `가득` 이면 `한가득·가득·가득가득` 이 잡힌다. 접미사는 넣지 않는다.
+    `가득히` 의 접미사 `득히` 를 넣으면 `그득히` 같은 남남까지 걸린다.
+    """
+    terms = {answer}
+    for i in range(2, len(answer)):
+        terms.add(answer[:i])
+    return sorted(terms, key=len, reverse=True)
+
+
 def leak_terms(answer: str) -> list[str]:
     """힌트 안에 나오면 안 되는 문자열들.
 
-    정답 자체, 그리고 길이 2 이상의 접두사. 접미사는 정답이 '다'로 끝나지 않을 때만
-    본다 — `속이다`의 접미사 `이다`까지 막으면 평범한 한국어 문장이 전부 걸린다.
+    어간에 더해 접미사까지 본다. 여기서는 과차단이 안전하다 — 걸리면 카드 한 장을
+    다시 만들 뿐이다. 다만 정답이 '다'로 끝나면 접미사는 건너뛴다. `속이다`의
+    접미사 `이다`까지 막으면 평범한 한국어 문장이 전부 걸린다.
     """
-    terms = {answer}
+    terms = set(stem_terms(answer))
     n = len(answer)
-    for i in range(2, n):
-        terms.add(answer[:i])
-        if not answer.endswith("다"):
+    if not answer.endswith("다"):
+        for i in range(2, n):
             terms.add(answer[n - i:])
     return sorted(terms, key=len, reverse=True)
 

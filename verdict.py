@@ -13,6 +13,10 @@ q_word 는 '떠올리기 쉬운가'가 아니다. 떠올리는 데 오래 걸리
 from __future__ import annotations
 
 SAMPLE_N = 16          # LLM 에게 보여주는 유사도 상위 단어 개수
+# 순위 가중. 1위 이웃은 16위 이웃보다 압도적으로 정보가 많다. `주인공` 날의 상위 16 에
+# 통하는 단어가 7개였는데 그게 1·2·5·6·7·14·16위였다. 개수만 세면 10~16위에 몰린 날과
+# 똑같이 0.4375 인데, 실제로는 1위 `여주인공`(58.98) 하나가 사실상 답을 쥐여준다.
+RANK_WEIGHT_TOTAL = sum(1.0 / r for r in range(1, SAMPLE_N + 1))
 # 1위 단어 점수 정규화 구간. 실측 분포가 39~62 라 35~70 은 너무 넓어서
 # 중간값이 부당하게 낮게 깎였다.
 FIRST_LO, FIRST_HI = 38.0, 62.0
@@ -51,33 +55,39 @@ def grade_of(playable: float) -> tuple[str, str, str]:
     raise AssertionError
 
 
-def effective_match(semantic_match: int, self_echo: int) -> int:
-    """정답 어간이 그대로 든 이웃은 다 합쳐 한 개로만 센다.
+def drop_echo(matched_ranks: list, echo_ranks: list) -> list:
+    """정답 어간이 그대로 든 이웃은 가장 높은 순위 하나만 남긴다.
 
     `가득히` 날의 상위 16 에 `한가득·가득·가득가득` 이 있었다. 셋 다 정답이 자기를
-    메아리친 것이라 목록이 넓게 가리키는 것처럼 보이게 만든다. 자기반향은 이미 그
-    동네에 도착한 사람에게만 신호이고, 밖에서 들어오는 데는 아무 도움이 안 된다.
+    메아리친 것이라 목록이 넓게 가리키는 것처럼 보이게 만든다.
     """
-    return max(0, semantic_match - max(0, self_echo - 1))
+    drop = set(sorted(echo_ranks)[1:])
+    return [r for r in matched_ranks if r not in drop]
+
+
+def weighted_ratio(matched_ranks: list) -> float:
+    """순위 가중 일치도. 1/순위 를 더해 상위 16개 전부일 때 1.0 이 되게 나눈다."""
+    return sum(1.0 / r for r in matched_ranks) / RANK_WEIGHT_TOTAL
 
 
 def judge(
     first_score: float,
     fairness: float | None,
-    semantic_match: int | None,
-    self_echo: int = 0,
+    matched_ranks: list | None,
+    echo_ranks: list | None = None,
 ) -> dict:
-    """first_score 는 0~100. fairness/semantic_match 가 없으면 축소 판정."""
+    """first_score 는 0~100. fairness/matched_ranks 가 없으면 축소 판정."""
     first_norm = norm(first_score, FIRST_LO, FIRST_HI)
-    eff = None if semantic_match is None else effective_match(semantic_match, self_echo)
+    echo_ranks = list(echo_ranks or [])
+    kept = None if matched_ranks is None else drop_echo(sorted(matched_ranks), echo_ranks)
 
-    if fairness is None or semantic_match is None:
+    if fairness is None or matched_ranks is None:
         q_match = first_norm
         q_word = None
         playable = 100 * q_match
         weakest = "reduced"
     else:
-        match_ratio = eff / SAMPLE_N
+        match_ratio = weighted_ratio(kept)
         # 1위 점수 비중이 0.35 였는데, 천장이 낮은 것은 결함이 아니라 난이도다.
         # 목록이 제대로 가리키면 낮은 천장에서도 수렴한다. 결함 신호인 match 에 무게를 준다.
         q_match = 0.80 * match_ratio + 0.20 * first_norm
@@ -106,9 +116,11 @@ def judge(
         "q_match": round(q_match, 3),
         "q_word": None if q_word is None else round(q_word, 3),
         "first_score": round(first_score, 2),
-        "semantic_match": semantic_match,
-        "semantic_match_eff": eff,
-        "self_echo": self_echo,
+        "semantic_match": None if matched_ranks is None else len(matched_ranks),
+        "semantic_match_eff": None if kept is None else len(kept),
+        "matched_ranks": None if matched_ranks is None else sorted(matched_ranks),
+        "kept_ranks": kept,
+        "self_echo": len(echo_ranks),
         "fairness": fairness,
         "reduced": q_word is None,
     }

@@ -111,13 +111,13 @@ JUDGE_SCHEMA = {
     "properties": {
         "fairness": {"type": "number"},
         "fairness_reason": {"type": "string"},
-        "semantic_match": {"type": "integer"},
+        "matched_ranks": {"type": "array", "items": {"type": "integer"}},
         "match_reason": {"type": "string"},
     },
     "required": [
         "fairness",
         "fairness_reason",
-        "semantic_match",
+        "matched_ranks",
         "match_reason",
     ],
 }
@@ -149,8 +149,10 @@ fairness (0.0~1.0)
   0.3~0.5  지역 방언, 특정 분야 전문용어, 문어체 전용, 사전에만 남은 말.
   0.0~0.2  고어·폐어, 비표준 표기, 사람들이 하나의 낱말로 인식하지 않는 형태.
 
-semantic_match (0~{n} 정수)
-  위 목록 {n}개 중 '정답 쪽을 가리키는' 단어의 개수.
+matched_ranks (정수 배열)
+  위 목록에서 '정답 쪽을 가리키는' 단어의 **순위 번호를 모두** 적어라. 개수가 아니라 번호다.
+  예: 1·2·5·7위가 통하면 [1, 2, 5, 7].
+  상위권일수록 점수에 크게 반영되니, 1~3위는 특히 신중히 판단하라.
   ★ 정답과 바꿔 쓸 수 있는가(동의어)를 세는 게 아니다. 그 단어를 본 사람의 생각이
     정답 쪽으로 굴러가는가를 센다. 이 게임은 유사도만 보고 답을 찾아가는 게임이라
     방향만 맞으면 도달한다. 동의어만 세면 멀쩡한 날을 망가진 날로 오판한다.
@@ -177,7 +179,8 @@ def judge_signals(answer: str, neighbors: list) -> dict:
         schema=JUDGE_SCHEMA,
     )
     out["fairness"] = max(0.0, min(1.0, float(out["fairness"])))
-    out["semantic_match"] = max(0, min(SAMPLE_N, int(out["semantic_match"])))
+    ranks = {int(r) for r in out.get("matched_ranks", []) if 1 <= int(r) <= SAMPLE_N}
+    out["matched_ranks"] = sorted(ranks)
 
     terms = leak_terms(answer)
     for field in ("fairness_reason", "match_reason"):

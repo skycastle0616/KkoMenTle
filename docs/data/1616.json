@@ -4,18 +4,47 @@
  "answer_b64": "7KO87J246rO1",
  "first_score": 58.98,
  "fairness": 1.0,
- "semantic_match": 7,
- "semantic_match_eff": 7,
+ "semantic_match": 11,
+ "semantic_match_eff": 11,
+ "matched_ranks": [
+  1,
+  2,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  14,
+  15,
+  16
+ ],
+ "kept_ranks": [
+  1,
+  2,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  14,
+  15,
+  16
+ ],
+ "echo_ranks": [
+  1
+ ],
  "self_echo": 1,
  "pos_b64": "66qF7IKs",
- "q_match": 0.525,
+ "q_match": 0.777,
  "q_word": 1.0,
- "playable": 52,
- "grade": "orange",
+ "playable": 78,
+ "grade": "green",
  "weakest": "match",
  "reduced": false,
  "dead_cards": [],
  "fairness_reason_b64": "",
  "match_reason_b64": "",
- "built_at": "2026-09-03T00:23:11+09:00"
+ "built_at": "2026-09-03T09:52:48+09:00"
 }

@@ -57,6 +57,30 @@ def stem_terms(answer: str) -> list[str]:
     return sorted(terms, key=len, reverse=True)
 
 
+def _with_final(syllable: str) -> list[str]:
+    """종성 없는 음절에 종성을 하나씩 붙인 27개. 이미 종성이 있으면 빈 목록."""
+    code = ord(syllable) - 0xAC00
+    if not 0 <= code < 11172 or code % 28 != 0:
+        return []
+    return [chr(0xAC00 + code + jong) for jong in range(1, 28)]
+
+
+def echo_terms(answer: str) -> list[str]:
+    """어간 + 어간 끝에 종성이 붙은 변이형.
+
+    `미끄럽다` 의 어간 `미끄` 는 `미끈`·`미끌` 의 부분 문자열이 아니다. 종성 ㄴ·ㄹ 이
+    붙으면서 글자 자체가 바뀌기 때문이다. 그래서 `미끈한`·`미끌미끌한` 이 유사어 카드에
+    그대로 떴다. 의태어는 이런 변이가 흔하므로 종성을 붙인 꼴까지 같이 막는다.
+
+    `자라` → `자랑` 처럼 남남이 걸리기도 하지만, 이웃이 1000개라 한둘 빠지는 건 공짜다.
+    반대로 놓치면 정답이 그대로 노출된다.
+    """
+    terms = set(stem_terms(answer))
+    for t in list(terms):
+        terms.update(t[:-1] + v for v in _with_final(t[-1]))
+    return sorted(terms, key=len, reverse=True)
+
+
 def scaled(top_scores: list) -> list[tuple[int, str, float]]:
     """[(순위, 단어, 0~100 점수)]. 거르지 않은 원본 — 판정은 이걸 봐야 한다."""
     return [(rank, word, round(score * 100, 2)) for rank, word, score in top_scores]
@@ -74,7 +98,7 @@ def filter_neighbors(answer: str, top_scores: list) -> list[tuple[int, str, floa
 
     반환은 [(원래 순위, 단어, 0~100 점수)] 이며 원래 순위를 유지한다.
     """
-    terms = stem_terms(answer)
+    terms = echo_terms(answer)
     out = []
     for rank, word, score in top_scores:
         if word in answer or any(t in word for t in terms):

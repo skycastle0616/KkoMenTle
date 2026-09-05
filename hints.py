@@ -81,7 +81,7 @@ def leak_terms(answer: str) -> list[str]:
     다시 만들 뿐이다. 다만 정답이 '다'로 끝나면 접미사는 건너뛴다. `속이다`의
     접미사 `이다`까지 막으면 평범한 한국어 문장이 전부 걸린다.
     """
-    terms = set(komantle.stem_terms(answer))
+    terms = set(komantle.echo_terms(answer))
     n = len(answer)
     if not answer.endswith("다"):
         for i in range(2, n):
@@ -343,7 +343,9 @@ def clean(raw: dict, answer: str):
 
 def hint_cards(answer: str):
     """가드 위반 시 1회만 재요청하고, 그래도 실패한 카드는 비활성으로 넘긴다."""
-    banned = ", ".join(leak_terms(answer))
+    # 프롬프트에는 읽히는 어간만 보여준다. 종성 변이형 27개까지 늘어놓으면
+    # 대부분 뜻 없는 음절이라 모델이 오히려 헷갈린다. 검사는 leak_terms 로 한다.
+    banned = ", ".join(komantle.stem_terms(answer))
     prompt = HINT_PROMPT.format(answer=answer, length=len(answer), banned=banned)
 
     raw = _call(prompt, temperature=0.9, schema=HINT_SCHEMA)

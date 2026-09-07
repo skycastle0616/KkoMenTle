@@ -1,0 +1,36 @@
+{
+ "id": 1621,
+ "date": "2026-09-08",
+ "answer_b64": "7ZS86rOk",
+ "first_score": 52.22,
+ "fairness": 1.0,
+ "semantic_match": 5,
+ "semantic_match_eff": 5,
+ "matched_ranks": [
+  2,
+  4,
+  6,
+  7,
+  8
+ ],
+ "kept_ranks": [
+  2,
+  4,
+  6,
+  7,
+  8
+ ],
+ "echo_ranks": [],
+ "self_echo": 0,
+ "pos_b64": "66qF7IKs",
+ "q_match": 0.399,
+ "q_word": 1.0,
+ "playable": 40,
+ "grade": "orange",
+ "weakest": "match",
+ "reduced": false,
+ "dead_cards": [],
+ "fairness_reason_b64": "",
+ "match_reason_b64": "",
+ "built_at": "2026-09-08T00:13:50+09:00"
+}

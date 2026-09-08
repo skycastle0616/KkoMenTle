@@ -111,12 +111,16 @@ JUDGE_SCHEMA = {
     "properties": {
         "fairness": {"type": "number"},
         "fairness_reason": {"type": "string"},
+        "probe": {"type": "number"},
+        "probe_reason": {"type": "string"},
         "matched_ranks": {"type": "array", "items": {"type": "integer"}},
         "match_reason": {"type": "string"},
     },
     "required": [
         "fairness",
         "fairness_reason",
+        "probe",
+        "probe_reason",
         "matched_ranks",
         "match_reason",
     ],
@@ -134,8 +138,8 @@ JUDGE_PROMPT = """너는 한국어 단어 유사도 게임 '꼬맨틀'의 오늘
 
 fairness (0.0~1.0)
   이 단어를 '오늘날의 표준 한국어'로서 게임 정답에 내걸기에 공정한가.
-  ★ 떠올리기까지 오래 걸리는 것은 난이도이고 그 자체가 게임의 재미다. 그건 깎지 마라.
-    깎아야 할 것은 정답으로 삼는 것 자체가 부당한 경우뿐이다.
+  ★ 떠올리기 어려운 것은 여기서 깎지 마라. 그건 probe 에서 따로 잰다.
+    여기서 깎을 것은 정답으로 삼는 것 자체가 부당한 경우뿐이다.
   1.0      현대 표준어. 사전에 있고 지금도 평범하게 쓰인다. 흔하지 않아도 여기 해당한다.
   0.6~0.8  표준어이긴 하나 현대 한국어에서 다른 말에 거의 밀려났다. 두 갈래다.
            ① 더 흔한 유의어가 사실상 대체했다.
@@ -148,6 +152,19 @@ fairness (0.0~1.0)
              이 신호가 보이면 1.0 을 주지 마라.
   0.3~0.5  지역 방언, 특정 분야 전문용어, 문어체 전용, 사전에만 남은 말.
   0.0~0.2  고어·폐어, 비표준 표기, 사람들이 하나의 낱말로 인식하지 않는 형태.
+
+probe (0.0~1.0)
+  정답이 무엇인지 전혀 모르는 사람이 이것저것 찍어보는 과정에서, 이 단어 자체를
+  (또는 아주 가까운 말을) 자연스럽게 떠올려 입력할 가능성.
+  ★ 단어를 아는가가 아니다. '탐색하다가 이걸 치게 되는가' 다.
+    뜻이 아무리 쉬워도 탐색 경로에 없으면 낮게 매겨라.
+  1.0      사람·사랑·시간·학교·친구처럼 누구나 초반 몇십 번 안에 칠 법한 말.
+  0.6~0.8  흔하지만 특정 주제를 떠올려야 닿는 말.
+  0.3~0.5  뜻은 다 알지만 탐색 중 굳이 칠 이유가 없는 말.
+  0.0~0.2  부사, 아주 구체적인 사물, 그리고 '이후·정도·상태' 같은 추상 기능어.
+           특히 기능어를 조심하라 — 뜻이 쉬워 후하게 주기 쉬운데, 실제로는 탐색 중
+           떠올릴 계기가 거의 없어서 가장 오래 걸리는 부류다.
+           (실측: '이후' 는 440번, '가득히' 는 400번 만에 풀렸다)
 
 matched_ranks (정수 배열)
   위 목록에서 '정답 쪽을 가리키는' 단어의 **순위 번호를 모두** 적어라. 개수가 아니라 번호다.
@@ -164,7 +181,7 @@ matched_ranks (정수 배열)
         보고도 정답 쪽으로 전혀 굴러가지 않는 것.
         예 (정답 '자라다'): 입양되어·과년한·영특하여·다스리다.
 
-fairness_reason / match_reason
+fairness_reason / probe_reason / match_reason
   각각 한 문장. 채점 근거. 페이지에 노출되지 않고 보정용 기록으로만 남는다.
 """
 
@@ -179,11 +196,12 @@ def judge_signals(answer: str, neighbors: list) -> dict:
         schema=JUDGE_SCHEMA,
     )
     out["fairness"] = max(0.0, min(1.0, float(out["fairness"])))
+    out["probe"] = max(0.0, min(1.0, float(out["probe"])))
     ranks = {int(r) for r in out.get("matched_ranks", []) if 1 <= int(r) <= SAMPLE_N}
     out["matched_ranks"] = sorted(ranks)
 
     terms = leak_terms(answer)
-    for field in ("fairness_reason", "match_reason"):
+    for field in ("fairness_reason", "probe_reason", "match_reason"):
         if leaks(out.get(field, ""), terms):
             out[field] = ""
     return out

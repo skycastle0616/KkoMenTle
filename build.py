@@ -164,7 +164,7 @@ def main() -> int:
         try:
             signals = hints.judge_signals(answer, judge_sample)
             print(f"[판정] fairness={signals['fairness']} "
-                  f"통하는 순위={signals['matched_ranks']}")
+                  f"probe={signals['probe']} 통하는 순위={signals['matched_ranks']}")
         except hints.GeminiError as exc:
             print(f"[경고] 판정 호출 실패 → 축소 판정으로 진행: {exc}", file=sys.stderr)
         try:
@@ -189,6 +189,7 @@ def main() -> int:
         signals.get("fairness"),
         signals.get("matched_ranks"),
         echo_ranks,
+        signals.get("probe"),
     )
     print(f"[결과] {v['playable']}점 {v['badge']} {v['headline']} / {v['subline']}")
 
@@ -217,6 +218,9 @@ def main() -> int:
         "answer_b64": ctx["answer_b64"],
         "first_score": first_score,
         "fairness": v["fairness"],
+        "probe": v["probe"],
+        "q_reach": v["q_reach"],
+        "broken": v["broken"],
         "semantic_match": v["semantic_match"],
         "semantic_match_eff": v["semantic_match_eff"],
         # 순위까지 남긴다. 다음 보정은 하루 체감이 아니라 이 기록으로 한다.
@@ -238,6 +242,7 @@ def main() -> int:
         # 채점 근거는 보정용으로만 남긴다. 정답의 분야를 그대로 말하는 문장이라
         # 공개 파일에 평문으로 두면 그 자체가 스포일러다. 정답과 같은 취급을 한다.
         "fairness_reason_b64": _b64(signals.get("fairness_reason", "")),
+        "probe_reason_b64": _b64(signals.get("probe_reason", "")),
         "match_reason_b64": _b64(signals.get("match_reason", "")),
         "built_at": komantle.now_kst().isoformat(timespec="seconds"),
     }

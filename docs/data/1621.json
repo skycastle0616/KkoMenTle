@@ -4,6 +4,9 @@
  "answer_b64": "7ZS86rOk",
  "first_score": 52.22,
  "fairness": 1.0,
+ "probe": 1.0,
+ "q_reach": 1.0,
+ "broken": false,
  "semantic_match": 5,
  "semantic_match_eff": 5,
  "matched_ranks": [
@@ -25,12 +28,13 @@
  "pos_b64": "66qF7IKs",
  "q_match": 0.399,
  "q_word": 1.0,
- "playable": 40,
- "grade": "orange",
- "weakest": "match",
+ "playable": 88,
+ "grade": "green",
+ "weakest": "reach",
  "reduced": false,
  "dead_cards": [],
  "fairness_reason_b64": "",
- "match_reason_b64": "",
- "built_at": "2026-09-08T00:13:50+09:00"
+ "probe_reason_b64": "7J287IOB7KCB7J24IOyLoOyytCDrsI8g6rCQ7KCVIOyDge2DnOulvCDtkZztmITtlZjripQg64yA7ZGc7KCBIOuLqOyWtOuhnCDqsozsnoQg7LSI67CY7JeQIOunpOyasCDsib3qsowg65ag7Jis66CkIOyeheugpe2VoCDsiJgg7J6I64ukLg==",
+ "match_reason_b64": "7Zy07Iud6rO8IOyXsOq0gOuQnCDtjrjslYgoMuychCksIOqwkOygleyggSDtlLzroZzsnbgg7Kec7KadKDTsnIQpLCDsp4HsoJHsoIEg7JuQ7J247J24IOyblOyalOuzkSg27JyEKSDrsI8g7IiY66m06rO8IOq0gOugqOuQnCDsobjroKQoN+ychCnCt+yhuOumrOuLpCg47JyEKSDrk7Eg7KCV64u1IOyXsOyDgeycvOuhnCDsnpDsl7DsiqTrn73qsowg7J207Ja07KeA64qUIOuLqOyWtOuTpOydtCDsg4HsnITqtozsl5Ag7J6YIOuwsOy5mOuQmOyWtCDsnojri6Qu",
+ "built_at": "2026-09-08T12:33:36+09:00"
 }

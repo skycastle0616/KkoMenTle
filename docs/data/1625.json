@@ -1,0 +1,42 @@
+{
+ "id": 1625,
+ "date": "2026-09-12",
+ "answer_b64": "65Ok66as64uk",
+ "first_score": 49.88,
+ "fairness": 1.0,
+ "probe": 0.8,
+ "q_reach": 0.8,
+ "broken": false,
+ "semantic_match": 6,
+ "semantic_match_eff": 6,
+ "matched_ranks": [
+  1,
+  6,
+  9,
+  11,
+  13,
+  15
+ ],
+ "kept_ranks": [
+  1,
+  6,
+  9,
+  11,
+  13,
+  15
+ ],
+ "echo_ranks": [],
+ "self_echo": 0,
+ "pos_b64": "64+Z7IKs",
+ "q_match": 0.457,
+ "q_word": 1.0,
+ "playable": 73,
+ "grade": "green",
+ "weakest": "reach",
+ "reduced": false,
+ "dead_cards": [],
+ "fairness_reason_b64": "",
+ "probe_reason_b64": "7J287IOB7KCB7J206rOgIO2dlO2VnCDquLDrs7gg64+Z7IKs66GcLCDtg5Dsg4kg6rO87KCVIOykkSDshozrpqzrgpgg67Cp66y4LCDrj5nsnpEg6rSA66CoIOuLqOyWtOulvCDsi5zrj4TtlZjrqbTshJwg67mE6rWQ7KCBIOu5oOultOqyjCDrlqDsmKzrprQg7IiYIOyeiOuLpC4=",
+ "match_reason_b64": "",
+ "built_at": "2026-09-12T03:16:38+09:00"
+}

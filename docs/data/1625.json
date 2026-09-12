@@ -6,6 +6,18 @@
  "fairness": 1.0,
  "probe": 0.8,
  "q_reach": 0.8,
+ "q_path": 0.074,
+ "probe_ranks": [
+  null,
+  null,
+  29,
+  null,
+  564,
+  null,
+  null,
+  null
+ ],
+ "probe_words_b64": "7IaM66asLOq3gCzrk6Pri6Qs66qp7IaM66asLOyauOumrOuLpCzshozsnYws67Cp66y4LOywvuyVhOqwgOuLpA==",
  "broken": false,
  "semantic_match": 6,
  "semantic_match_eff": 6,
@@ -30,13 +42,13 @@
  "pos_b64": "64+Z7IKs",
  "q_match": 0.457,
  "q_word": 1.0,
- "playable": 73,
- "grade": "green",
- "weakest": "reach",
+ "playable": 33,
+ "grade": "orange",
+ "weakest": "path",
  "reduced": false,
  "dead_cards": [],
  "fairness_reason_b64": "",
- "probe_reason_b64": "7J287IOB7KCB7J206rOgIO2dlO2VnCDquLDrs7gg64+Z7IKs66GcLCDtg5Dsg4kg6rO87KCVIOykkSDshozrpqzrgpgg67Cp66y4LCDrj5nsnpEg6rSA66CoIOuLqOyWtOulvCDsi5zrj4TtlZjrqbTshJwg67mE6rWQ7KCBIOu5oOultOqyjCDrlqDsmKzrprQg7IiYIOyeiOuLpC4=",
- "match_reason_b64": "",
- "built_at": "2026-09-12T03:16:38+09:00"
+ "probe_reason_b64": "7LKt6rCB7J2064KYIOyGjOumrCDqtIDroKgg7YOQ7IOJLCDtmLnsnYAg67Cp66y4IOq0gOugqCDtg5Dsg4kg6rO87KCV7JeQ7IScIOyekOyXsOyKpOufveqyjCDsnoXroKXtlbQg67O8IOuyle2VnCDquLDrs7gg64+Z7IKs7J6F64uI64ukLg==",
+ "match_reason_b64": "7KSR7Ja86rGw66as64ukLCDsm4Xslrzsm4XslrwsIOybheyEseybheyEsSDrk7Eg7IaM66asIOuwjyDssq3qsIEg6rSA66CoIOyWtO2cmOuTpOydtCDsg4HsnITqtozsl5Ag7Y+s7KeE7ZWY7JesIOygleuLteydmCDrnLsg7Kq97Jy866GcIOyDneqwgeydhCDsnKDrj4Ttlanri4jri6Qu",
+ "built_at": "2026-09-12T10:49:15+09:00"
 }

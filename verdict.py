@@ -17,6 +17,8 @@
 """
 from __future__ import annotations
 
+import math
+
 SAMPLE_N = 16          # LLM 에게 보여주는 유사도 상위 단어 개수
 # 순위 가중. 1위 이웃은 16위 이웃보다 압도적으로 정보가 많다. `주인공` 날의 상위 16 에
 # 통하는 단어가 7개였는데 그게 1·2·5·6·7·14·16위였다. 개수만 세면 10~16위에 몰린 날과
@@ -32,6 +34,15 @@ MATCH_W, REACH_W = 0.20, 0.80
 # 이 밑이면 임베딩이 정답의 뜻을 아예 안 따라간다. 난이도와 무관하게 🔴.
 BROKEN_GATE = 0.15
 
+# 경로 신호. 두 축은 정답에서 바깥을 보는데, 사람은 바깥에서 안으로 들어온다.
+# `들리다` 날에 `소리·귀·청각·목소리·소음` 이 전부 1000위 밖이었다. 정답은 흔한 말이라
+# q_reach 0.8, 상위권에 소리 관련어도 있어 q_match 0.46 — 두 축 다 통과했는데 실제로는
+# 500~600회 걸렸다. 사람이 치는 말에 점수가 안 붙으면 경로가 맞아도 못 간다.
+# 나쁠 때만 물도록 캡으로 쓴다. PATH_GOOD 이상이면 캡이 1.0 이라 아예 안 문다 —
+# 포화점이 없으면 q_path 가 1.0 에 닿는 날이 없어서 매일 캡이 물고 점수를 끌어내린다.
+# PATH_GOOD 은 실측에서 왔다. `공사` 날 탐색어 8개가 전부 1000위 안이었고 q_path 0.538.
+PATH_FLOOR, PATH_GOOD = 0.20, 0.45
+
 # 임계값도 실측에 맞췄다. 배합이 q_reach 중심이 되면서 점수 분포가 통째로 내려왔다.
 GRADES = [
     (60, "green", "🟢", "오늘은 할 만합니다"),
@@ -45,6 +56,7 @@ GRADES = [
 SUBLINE = {
     "broken": "유사도가 정답의 뜻을 배신하는 날입니다",
     "word": "정답으로 내걸기엔 공정하지 않은 단어입니다",
+    "path": "가까이 가도 점수가 말을 안 해주는 날입니다",
     "reduced": "유사도 점수만으로 매긴 임시 판정입니다",
     # 대부분의 날은 이쪽이다. 고장이 아니라 '떠올릴 계기가 있느냐' 로 갈린다.
     "reach": {
@@ -77,6 +89,14 @@ def drop_echo(matched_ranks: list, echo_ranks: list) -> list:
     return [r for r in matched_ranks if r not in drop]
 
 
+def path_ratio(ranks: list) -> float:
+    """탐색어들이 1000위 안 어디에 걸리는지. 1위 1.0, 1000위 0.0, 밖이면 0."""
+    if not ranks:
+        return 0.0
+    hit = sum(max(0.0, 1.0 - math.log10(r) / 3.0) for r in ranks if r)
+    return hit / len(ranks)
+
+
 def weighted_ratio(matched_ranks: list) -> float:
     """순위 가중 일치도. 1/순위 를 더해 상위 16개 전부일 때 1.0 이 되게 나눈다."""
     return sum(1.0 / r for r in matched_ranks) / RANK_WEIGHT_TOTAL
@@ -88,6 +108,7 @@ def judge(
     matched_ranks: list | None,
     echo_ranks: list | None = None,
     probe: float | None = None,
+    probe_ranks: list | None = None,
 ) -> dict:
     """first_score 는 0~100. LLM 신호가 없으면 축소 판정."""
     first_norm = norm(first_score, FIRST_LO, FIRST_HI)
@@ -98,6 +119,7 @@ def judge(
     if fairness is None or matched_ranks is None or probe is None:
         q_match = first_norm
         q_word = q_reach = None
+        q_path = path_cap = None
         playable = 100 * q_match
         weakest = "reduced"
     else:
@@ -105,10 +127,21 @@ def judge(
         q_word = float(fairness)
         q_reach = float(probe)
         base = MATCH_W * q_match + REACH_W * q_reach
+        q_path = path_ratio(probe_ranks or [])
+        path_cap = PATH_FLOOR + (1 - PATH_FLOOR) * min(1.0, q_path / PATH_GOOD)
         # 공정하지 않은 단어는 아무리 닿기 쉬워도 그 위로 못 올라간다.
-        playable = 100 * min(base, q_word)
+        # 경로가 막힌 날도 마찬가지다. 둘 다 캡이라 나쁠 때만 문다.
+        capped = min(base, q_word, path_cap)
+        playable = 100 * capped
         broken = q_match < BROKEN_GATE
-        weakest = "broken" if broken else ("word" if q_word < base else "reach")
+        if broken:
+            weakest = "broken"
+        elif capped == path_cap < base:
+            weakest = "path"
+        elif capped == q_word < base:
+            weakest = "word"
+        else:
+            weakest = "reach"
 
     # 화면에 나가는 값으로 등급을 매긴다. 반올림 전 값으로 매기면 77.8 이 🟡 인데
     # 표시는 78 이라, 78+ 는 🟢 이라고 적어둔 기준과 어긋나 보인다.
@@ -128,6 +161,8 @@ def judge(
         "q_match": round(q_match, 3),
         "q_word": None if q_word is None else round(q_word, 3),
         "q_reach": None if q_reach is None else round(q_reach, 3),
+        "q_path": None if q_path is None else round(q_path, 3),
+        "probe_ranks": probe_ranks,
         "probe": probe,
         "broken": broken,
         "first_score": round(first_score, 2),

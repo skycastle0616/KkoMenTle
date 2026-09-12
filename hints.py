@@ -113,6 +113,7 @@ JUDGE_SCHEMA = {
         "fairness_reason": {"type": "string"},
         "probe": {"type": "number"},
         "probe_reason": {"type": "string"},
+        "probe_words": {"type": "array", "items": {"type": "string"}},
         "matched_ranks": {"type": "array", "items": {"type": "integer"}},
         "match_reason": {"type": "string"},
     },
@@ -121,6 +122,7 @@ JUDGE_SCHEMA = {
         "fairness_reason",
         "probe",
         "probe_reason",
+        "probe_words",
         "matched_ranks",
         "match_reason",
     ],
@@ -166,6 +168,14 @@ probe (0.0~1.0)
            떠올릴 계기가 거의 없어서 가장 오래 걸리는 부류다.
            (실측: '이후' 는 440번, '가득히' 는 400번 만에 풀렸다)
 
+probe_words (문자열 8개)
+  정답을 모르는 사람이 이 정답을 찾아가는 도중 자연스럽게 쳐볼 법한 단어 8개.
+  ★ 정답 자체와 그 활용형은 넣지 마라. 정답에 '닿기 전에' 치는 말들이다.
+  기본형 명사·동사 위주로, 서로 다른 각도에서 골라라.
+    예 (정답 '들리다'): 소리, 귀, 듣다, 청각, 목소리, 소음, 울리다, 조용하다
+  이 목록은 화면에 나오지 않는다. 실제 유사도 순위를 조회해서 '사람이 자연스럽게
+  치는 말들이 점수 피드백을 주는가' 를 재는 데만 쓴다.
+
 matched_ranks (정수 배열)
   위 목록에서 '정답 쪽을 가리키는' 단어의 **순위 번호를 모두** 적어라. 개수가 아니라 번호다.
   예: 1·2·5·7위가 통하면 [1, 2, 5, 7].
@@ -197,6 +207,13 @@ def judge_signals(answer: str, neighbors: list) -> dict:
     )
     out["fairness"] = max(0.0, min(1.0, float(out["fairness"])))
     out["probe"] = max(0.0, min(1.0, float(out["probe"])))
+    # 정답이나 그 어간이 섞여 들어오면 뺀다. 정답은 자기 이웃 목록에 없어서 0점으로
+    # 잡히는데, 그건 '경로가 막혔다'가 아니라 조회가 무의미한 것이다.
+    stems = komantle.echo_terms(answer)
+    out["probe_words"] = [
+        w.strip() for w in out.get("probe_words", [])
+        if w.strip() and not any(t in w for t in stems)
+    ][:8]
     ranks = {int(r) for r in out.get("matched_ranks", []) if 1 <= int(r) <= SAMPLE_N}
     out["matched_ranks"] = sorted(ranks)
 

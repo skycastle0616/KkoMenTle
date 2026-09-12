@@ -184,12 +184,22 @@ def main() -> int:
     if len(echo_ranks) > 1:
         print(f"[할인] 정답 어간이 든 이웃 {echo_ranks} → 가장 높은 순위 하나만 남긴다")
 
+    # 역방향 신호. LLM 이 고른 탐색어들이 실제 1000개 목록 몇 위에 걸리는지 조회한다.
+    # 순위 조회는 결정론적이다 — LLM 은 '무엇을 쳐볼까'만 고른다.
+    rank_of = {w: r for r, w, _ in judge_sample}
+    probe_words = signals.get("probe_words") or []
+    probe_ranks = [rank_of.get(w) for w in probe_words]
+    if probe_words:
+        hit = [f"{w}({r})" if r else f"{w}(밖)" for w, r in zip(probe_words, probe_ranks)]
+        print(f"[경로] {' '.join(hit)}")
+
     v = verdict.judge(
         first_score,
         signals.get("fairness"),
         signals.get("matched_ranks"),
         echo_ranks,
         signals.get("probe"),
+        probe_ranks,
     )
     print(f"[결과] {v['playable']}점 {v['badge']} {v['headline']} / {v['subline']}")
 
@@ -220,6 +230,10 @@ def main() -> int:
         "fairness": v["fairness"],
         "probe": v["probe"],
         "q_reach": v["q_reach"],
+        "q_path": v["q_path"],
+        "probe_ranks": v["probe_ranks"],
+        # 탐색어는 정답을 좁히는 목록이라 평문으로 두면 스포일러다.
+        "probe_words_b64": _b64(",".join(probe_words)),
         "broken": v["broken"],
         "semantic_match": v["semantic_match"],
         "semantic_match_eff": v["semantic_match_eff"],

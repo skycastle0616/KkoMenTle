@@ -1,0 +1,100 @@
+{
+ "1610": {
+  "tries_min": 130,
+  "tries_max": 130,
+  "hinted": null,
+  "gave_up": false,
+  "source": "README"
+ },
+ "1611": {
+  "tries_min": null,
+  "tries_max": null,
+  "hinted": null,
+  "gave_up": true,
+  "source": "README"
+ },
+ "1612": {
+  "tries_min": 141,
+  "tries_max": 141,
+  "hinted": null,
+  "gave_up": false,
+  "source": "README"
+ },
+ "1613": {
+  "tries_min": 124,
+  "tries_max": 124,
+  "hinted": null,
+  "gave_up": false,
+  "source": "README"
+ },
+ "1614": {
+  "tries_min": 200,
+  "tries_max": 200,
+  "hinted": null,
+  "gave_up": false,
+  "source": "README"
+ },
+ "1615": {
+  "tries_min": 400,
+  "tries_max": 400,
+  "hinted": null,
+  "gave_up": false,
+  "source": "README"
+ },
+ "1616": {
+  "tries_min": 36,
+  "tries_max": 36,
+  "hinted": null,
+  "gave_up": false,
+  "source": "README"
+ },
+ "1617": {
+  "tries_min": 22,
+  "tries_max": 22,
+  "hinted": null,
+  "gave_up": false,
+  "source": "README"
+ },
+ "1618": {
+  "tries_min": 300,
+  "tries_max": 300,
+  "hinted": null,
+  "gave_up": false,
+  "source": "README"
+ },
+ "1619": {
+  "tries_min": 440,
+  "tries_max": 440,
+  "hinted": null,
+  "gave_up": false,
+  "source": "README"
+ },
+ "1620": {
+  "tries_min": 400,
+  "tries_max": 400,
+  "hinted": null,
+  "gave_up": false,
+  "source": "README"
+ },
+ "1621": {
+  "tries_min": 57,
+  "tries_max": 57,
+  "hinted": null,
+  "gave_up": false,
+  "source": "README"
+ },
+ "1624": {
+  "tries_min": 400,
+  "tries_max": 400,
+  "hinted": null,
+  "gave_up": false,
+  "source": "README"
+ },
+ "1625": {
+  "tries_min": 500,
+  "tries_max": 600,
+  "hinted": null,
+  "gave_up": false,
+  "source": "README"
+ }
+}

@@ -32,7 +32,14 @@ FIRST_LO, FIRST_HI = 38.0, 62.0
 # 나빠진다 (0.2 → -0.71, 0.5 → -0.39, 1.0 → +0.47).
 MATCH_W, REACH_W = 0.20, 0.80
 # 이 밑이면 임베딩이 정답의 뜻을 아예 안 따라간다. 난이도와 무관하게 🔴.
+# weighted_ratio 에만 건다 — q_match 에 걸면 1위 점수가 게이트를 대신 통과시킨다.
+# 통하는 단어가 0개여도 first_score 56 이면 q_match 가 정확히 0.15 라, 55점과 56점이
+# 같은 67점인데 한쪽은 🔴 다른 쪽은 🟢 로 갈렸다. 붕괴는 뜻의 문제지 점수 크기가 아니다.
 BROKEN_GATE = 0.15
+
+# 공식이 바뀌면 그날 날짜로 올린다. 지난 기록과 지금 기록이 같은 자로 잰 것인지
+# 구분하려면 점수만 남겨서는 안 된다.
+FORMULA_VERSION = "2026-09-18"
 
 # 경로 신호. 두 축은 정답에서 바깥을 보는데, 사람은 바깥에서 안으로 들어온다.
 # `들리다` 날에 `소리·귀·청각·목소리·소음` 이 전부 1000위 밖이었다. 정답은 흔한 말이라
@@ -41,7 +48,11 @@ BROKEN_GATE = 0.15
 # 나쁠 때만 물도록 캡으로 쓴다. PATH_GOOD 이상이면 캡이 1.0 이라 아예 안 문다 —
 # 포화점이 없으면 q_path 가 1.0 에 닿는 날이 없어서 매일 캡이 물고 점수를 끌어내린다.
 # PATH_GOOD 은 실측에서 왔다. `공사` 날 탐색어 8개가 전부 1000위 안이었고 q_path 0.538.
-PATH_FLOOR, PATH_GOOD = 0.20, 0.45
+# PATH_FLOOR 는 0.20 이었는데, 그러면 q_path 0.045 밑으로 떨어져야만 🔴 에 닿는다.
+# `들리다`(0.074 · 실측 500~600회)와 `다가가다`(0.092 · 탐색어 8개 중 5개가 1000위 밖)가
+# 둘 다 🟠 33·36 으로 살아남았다. 0.08 로 낮추면 그 둘만 23·27 🔴 로 내려가고
+# q_path 0.2 이상인 날은 등급이 그대로다.
+PATH_FLOOR, PATH_GOOD = 0.08, 0.45
 
 # 임계값도 실측에 맞췄다. 배합이 q_reach 중심이 되면서 점수 분포가 통째로 내려왔다.
 GRADES = [
@@ -118,25 +129,32 @@ def judge(
 
     if fairness is None or matched_ranks is None or probe is None:
         q_match = first_norm
+        wr = None
         q_word = q_reach = None
         q_path = path_cap = None
         playable = 100 * q_match
         weakest = "reduced"
     else:
-        q_match = 0.80 * weighted_ratio(kept) + 0.20 * first_norm
+        wr = weighted_ratio(kept)
+        q_match = 0.80 * wr + 0.20 * first_norm
         q_word = float(fairness)
         q_reach = float(probe)
         base = MATCH_W * q_match + REACH_W * q_reach
-        q_path = path_ratio(probe_ranks or [])
-        path_cap = PATH_FLOOR + (1 - PATH_FLOOR) * min(1.0, q_path / PATH_GOOD)
+        # 탐색어를 충분히 확보하지 못한 날은 '경로가 막힌' 게 아니라 '재보지 못한' 것이다.
+        # 빈 목록을 0 으로 읽으면 q_reach 0.9 짜리 멀쩡한 날이 8점 🔴 로 떨어진다.
+        if probe_ranks:
+            q_path = path_ratio(probe_ranks)
+            path_cap = PATH_FLOOR + (1 - PATH_FLOOR) * min(1.0, q_path / PATH_GOOD)
+        else:
+            q_path = path_cap = None
         # 공정하지 않은 단어는 아무리 닿기 쉬워도 그 위로 못 올라간다.
         # 경로가 막힌 날도 마찬가지다. 둘 다 캡이라 나쁠 때만 문다.
-        capped = min(base, q_word, path_cap)
+        capped = min([base, q_word] + ([path_cap] if path_cap is not None else []))
         playable = 100 * capped
-        broken = q_match < BROKEN_GATE
+        broken = wr < BROKEN_GATE
         if broken:
             weakest = "broken"
-        elif capped == path_cap < base:
+        elif path_cap is not None and capped == path_cap < base:
             weakest = "path"
         elif capped == q_word < base:
             weakest = "word"
@@ -162,6 +180,7 @@ def judge(
         "q_word": None if q_word is None else round(q_word, 3),
         "q_reach": None if q_reach is None else round(q_reach, 3),
         "q_path": None if q_path is None else round(q_path, 3),
+        "weighted_ratio": None if wr is None else round(wr, 3),
         "probe_ranks": probe_ranks,
         "probe": probe,
         "broken": broken,

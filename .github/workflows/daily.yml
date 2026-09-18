@@ -54,13 +54,15 @@ jobs:
         run: python build.py --out docs
 
       # 배포는 아티팩트로 하지만, docs/data/*.json 은 커밋해야 다음 날 기록이 쌓인다.
+      # archive/ 는 배포되지 않지만 같이 커밋한다 — 꼬맨틀 API 가 3일치만 열어서
+      # 그날 받아둔 상위 1000개를 놓치면 나중에 공식을 못 되짚는다.
       - name: 기록 커밋
         if: ${{ github.event_name == 'schedule'
           || (github.event_name == 'workflow_dispatch' && inputs.rebuild) }}
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add docs
+          git add docs archive
           if git diff --staged --quiet; then
             echo "변경 없음"
           else

@@ -22,6 +22,15 @@ BACKOFF = (0, 15, 30)
 ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 TIMEOUT = 90
 SAMPLE_N = 16
+# 탐색어. 어간 필터와 중복 제거로 깎여나가므로 넉넉히 받아서 줄인다. SEARCH_MIN 을
+# 못 채우면 경로를 재지 못한 것으로 보고 q_path 를 미측정으로 둔다.
+SEARCH_ASK, SEARCH_KEEP, SEARCH_MIN = 12, 8, 6
+# 프롬프트가 바뀌면 올린다. 지난 기록과 지금 기록이 같은 자로 잰 것인지 구분하려면
+# 점수만 남겨서는 안 된다.
+PROMPT_VERSION = "2026-09-18"
+
+# 어느 모델이 실제로 답했는지. MODELS 를 순서대로 도는 구조라 날마다 다를 수 있다.
+LAST_MODEL = None
 
 
 class GeminiError(RuntimeError):
@@ -33,6 +42,7 @@ def api_key() -> str | None:
 
 
 def _call(prompt: str, temperature: float, schema: dict) -> dict:
+    global LAST_MODEL
     key = api_key()
     if not key:
         raise GeminiError("GEMINI_API_KEY 가 없다")
@@ -60,6 +70,7 @@ def _call(prompt: str, temperature: float, schema: dict) -> dict:
                 )
                 r.raise_for_status()
                 text = r.json()["candidates"][0]["content"]["parts"][0]["text"]
+                LAST_MODEL = model
                 return json.loads(text)
             except requests.HTTPError as exc:  # 모델 폐기(404)·할당량(429)은 다시 물어도 같다
                 errors.append(f"{model}: HTTP {exc.response.status_code}")
@@ -113,8 +124,8 @@ JUDGE_SCHEMA = {
         "fairness_reason": {"type": "string"},
         "probe": {"type": "number"},
         "probe_reason": {"type": "string"},
-        "probe_words": {"type": "array", "items": {"type": "string"}},
         "matched_ranks": {"type": "array", "items": {"type": "integer"}},
+        "direct_ranks": {"type": "array", "items": {"type": "integer"}},
         "match_reason": {"type": "string"},
     },
     "required": [
@@ -122,8 +133,8 @@ JUDGE_SCHEMA = {
         "fairness_reason",
         "probe",
         "probe_reason",
-        "probe_words",
         "matched_ranks",
+        "direct_ranks",
         "match_reason",
     ],
 }
@@ -168,14 +179,6 @@ probe (0.0~1.0)
            떠올릴 계기가 거의 없어서 가장 오래 걸리는 부류다.
            (실측: '이후' 는 440번, '가득히' 는 400번 만에 풀렸다)
 
-probe_words (문자열 8개)
-  정답을 모르는 사람이 이 정답을 찾아가는 도중 자연스럽게 쳐볼 법한 단어 8개.
-  ★ 정답 자체와 그 활용형은 넣지 마라. 정답에 '닿기 전에' 치는 말들이다.
-  기본형 명사·동사 위주로, 서로 다른 각도에서 골라라.
-    예 (정답 '들리다'): 소리, 귀, 듣다, 청각, 목소리, 소음, 울리다, 조용하다
-  이 목록은 화면에 나오지 않는다. 실제 유사도 순위를 조회해서 '사람이 자연스럽게
-  치는 말들이 점수 피드백을 주는가' 를 재는 데만 쓴다.
-
 matched_ranks (정수 배열)
   위 목록에서 '정답 쪽을 가리키는' 단어의 **순위 번호를 모두** 적어라. 개수가 아니라 번호다.
   예: 1·2·5·7위가 통하면 [1, 2, 5, 7].
@@ -190,6 +193,12 @@ matched_ranks (정수 배열)
   안 센다: 엉뚱한 분야로 통째로 튄 것, 형태만 닮고 뜻이 전혀 다른 것, 고유명사·지명,
         보고도 정답 쪽으로 전혀 굴러가지 않는 것.
         예 (정답 '자라다'): 입양되어·과년한·영특하여·다스리다.
+
+direct_ranks (정수 배열)
+  matched_ranks 중에서 **그 단어 하나만 보고도 정답을 좁힐 수 있는** 것의 순위.
+  나머지는 방향은 맞지만 그것만으로는 못 좁히는 느슨한 연관이다.
+  ★ 채점에 쓰지 않는다. 둘을 같은 무게로 세는 게 맞는지 나중에 검증하려고 남긴다.
+    그러니 matched_ranks 를 여기에 맞춰 줄이지 마라 — 둘은 따로 판단한다.
 
 fairness_reason / probe_reason / match_reason
   각각 한 문장. 채점 근거. 페이지에 노출되지 않고 보정용 기록으로만 남는다.
@@ -207,21 +216,72 @@ def judge_signals(answer: str, neighbors: list) -> dict:
     )
     out["fairness"] = max(0.0, min(1.0, float(out["fairness"])))
     out["probe"] = max(0.0, min(1.0, float(out["probe"])))
-    # 정답이나 그 어간이 섞여 들어오면 뺀다. 정답은 자기 이웃 목록에 없어서 0점으로
-    # 잡히는데, 그건 '경로가 막혔다'가 아니라 조회가 무의미한 것이다.
-    stems = komantle.echo_terms(answer)
-    out["probe_words"] = [
-        w.strip() for w in out.get("probe_words", [])
-        if w.strip() and not any(t in w for t in stems)
-    ][:8]
+    out["model"] = LAST_MODEL
     ranks = {int(r) for r in out.get("matched_ranks", []) if 1 <= int(r) <= SAMPLE_N}
     out["matched_ranks"] = sorted(ranks)
+    # 직접 단서는 통하는 단어의 부분집합이어야 한다. LLM 이 matched 에 없는 순위를
+    # 적어 보내면 버린다 — 채점에 안 쓰는 기록이라 조용히 맞춰두면 된다.
+    out["direct_ranks"] = sorted(
+        {int(r) for r in out.get("direct_ranks", []) if int(r) in ranks}
+    )
 
     terms = leak_terms(answer)
     for field in ("fairness_reason", "probe_reason", "match_reason"):
         if leaks(out.get(field, ""), terms):
             out[field] = ""
     return out
+
+
+# ---------------------------------------------------------------- 탐색어 호출
+
+SEARCH_SCHEMA = {
+    "type": "object",
+    "properties": {"probe_words": {"type": "array", "items": {"type": "string"}}},
+    "required": ["probe_words"],
+}
+
+# 예시를 일부러 넣지 않는다. 예시로 '들리다'를 썼더니 1625회차(정답이 '들리다')에서
+# LLM 이 예시 단어 8개 중 6개를 그대로 돌려줬고, 1627회차('소음')에서도 3개가 샜다.
+# 하필 그 두 날이 q_path 의 근거라 자를 자기 자신으로 잰 꼴이 됐다.
+SEARCH_PROMPT = """한국어 단어 유사도 게임 '꼬맨틀'의 오늘 정답은 '{answer}' 다.
+
+정답이 무엇인지 전혀 모르는 사람이 이것저것 찍어보다가, 이 정답에 닿기 **전에**
+자연스럽게 쳐볼 법한 단어 {ask}개를 골라라.
+
+★ 정답 자체와 그 활용형은 넣지 마라.
+★ 기본형 명사·동사·형용사 위주로, 서로 겹치지 않게 골라라.
+★ 정답의 뜻이 여러 갈래면 갈래마다 고르게 넣어라. 한 갈래에 몰아 넣으면
+  그 갈래만 막힌 날과 전부 막힌 날을 구분할 수 없다.
+★ 사람이 실제로 칠 만한 말이어야 한다. 사전에만 있는 말은 넣지 마라.
+
+이 목록은 화면에 나오지 않는다. 실제 유사도 순위를 조회해서 '사람이 자연스럽게
+치는 말들이 점수 피드백을 주는가' 를 재는 데만 쓴다.
+"""
+
+
+def search_words(answer: str) -> list[str]:
+    """탐색어만 따로 받는다. 상위 유사어 목록을 보여주지 않는 것이 핵심이다.
+
+    판정과 한 번에 받으면 LLM 이 이미 목록에 있는 말 쪽으로 끌린다. q_path 는
+    '바깥에서 안으로 들어오는 길'을 재는 축이라, 안을 본 채로 고른 말로는 못 잰다.
+
+    정답 어간이 든 말은 뺀다. 정답은 자기 이웃 목록에 없어서 0점으로 잡히는데,
+    그건 '경로가 막혔다'가 아니라 조회가 무의미한 것이다.
+    """
+    out = _call(
+        SEARCH_PROMPT.format(answer=answer, ask=SEARCH_ASK),
+        temperature=0.3,
+        schema=SEARCH_SCHEMA,
+    )
+    stems = komantle.echo_terms(answer)
+    seen, words = set(), []
+    for w in out.get("probe_words", []):
+        w = w.strip()
+        if not w or w in seen or any(t in w for t in stems):
+            continue
+        seen.add(w)
+        words.append(w)
+    return words[:SEARCH_KEEP]
 
 
 # ---------------------------------------------------------------- 힌트 호출

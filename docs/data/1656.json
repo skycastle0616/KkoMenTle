@@ -1,0 +1,63 @@
+{
+ "id": 1656,
+ "date": "2026-10-13",
+ "formula_version": "2026-09-18",
+ "prompt_version": "2026-09-18",
+ "model": "gemini-3.6-flash",
+ "answer_b64": "7JiB7ZmU6rSA",
+ "first_score": 50.67,
+ "fairness": 1.0,
+ "probe": 0.8,
+ "q_reach": 0.8,
+ "q_path": 0.293,
+ "probe_ranks": [
+  2,
+  null,
+  690,
+  160,
+  null,
+  93,
+  775,
+  6
+ ],
+ "probe_n": 8,
+ "probe_words_b64": "6re57J6lLO2Mney9mCzrjbDsnbTtirgs6rSA656MLOuwsOyasCzsmIjrp6Qs7Yuw7LyTLOyDgeyYgQ==",
+ "broken": false,
+ "semantic_match": 5,
+ "semantic_match_eff": 5,
+ "matched_ranks": [
+  1,
+  2,
+  5,
+  6,
+  10
+ ],
+ "direct_ranks": [
+  2,
+  5,
+  6
+ ],
+ "kept_ranks": [
+  1,
+  2,
+  5,
+  6,
+  10
+ ],
+ "echo_ranks": [],
+ "self_echo": 0,
+ "pos_b64": "66qF7IKs",
+ "q_match": 0.571,
+ "weighted_ratio": 0.582,
+ "q_word": 1.0,
+ "playable": 68,
+ "grade": "green",
+ "weakest": "path",
+ "reduced": false,
+ "dead_cards": [],
+ "outcome": null,
+ "fairness_reason_b64": "",
+ "probe_reason_b64": "",
+ "match_reason_b64": "",
+ "built_at": "2026-10-13T07:27:41+09:00"
+}

@@ -1,0 +1,62 @@
+{
+ "id": 1666,
+ "date": "2026-10-23",
+ "formula_version": "2026-09-18",
+ "prompt_version": "2026-09-18",
+ "model": "gemini-3.6-flash",
+ "answer_b64": "7LC465CY64uk",
+ "first_score": 49.72,
+ "fairness": 1.0,
+ "probe": 0.4,
+ "q_reach": 0.4,
+ "q_path": 0.052,
+ "probe_ranks": [
+  56,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null
+ ],
+ "probe_n": 8,
+ "probe_words_b64": "7KeE7Iuk7ZWY64ukLOyYrOuwlOultOuLpCzqsbDsp5Ms7KeE7KCV7ZWY64ukLOygleydmOuhreuLpCzrs7TrnozssKjri6Qs6rCA7LmY7J6I64ukLOynhOyLrA==",
+ "broken": false,
+ "semantic_match": 5,
+ "semantic_match_eff": 5,
+ "matched_ranks": [
+  2,
+  4,
+  6,
+  7,
+  11
+ ],
+ "direct_ranks": [
+  2,
+  11
+ ],
+ "kept_ranks": [
+  2,
+  4,
+  6,
+  7,
+  11
+ ],
+ "echo_ranks": [],
+ "self_echo": 0,
+ "pos_b64": "7ZiV7Jqp7IKs",
+ "q_match": 0.37,
+ "weighted_ratio": 0.34,
+ "q_word": 1.0,
+ "playable": 19,
+ "grade": "red",
+ "weakest": "path",
+ "reduced": false,
+ "dead_cards": [],
+ "outcome": null,
+ "fairness_reason_b64": "",
+ "probe_reason_b64": "64uo7Ja07J2YIOucu+ydgCDriITqtazrgpgg7JWM7KeA66eMIO2DkOyDiSDstIjquLDsl5Ag6rOn67CU66GcIOuWoOyYrOugpCDsnoXroKXtlZjquLDripQg7Ja066Ck7Jq0IO2YleyaqeyCrOydtOuLpC4=",
+ "match_reason_b64": "J+2Xm+uQmOuLpCfripQg7KeB7KCR7KCB7J24IOuwmOydmOyWtOydtOqzoCAn7KCV7KeB7ZWY7JesJ+uKlCDtlbXsi6wg7Jyg7J2Y7Ja07J2066mwLCAn67O165CY64ukJ+yZgCAn6rGw66Op7ZWY64ukJyDrk7HsnbQg64+E642V7KCBIOunpeudveydmCDrsKntlqXshLHsnYQg7KCc7Iuc7ZWc64ukLg==",
+ "built_at": "2026-10-23T04:05:30+09:00"
+}

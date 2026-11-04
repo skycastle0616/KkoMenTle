@@ -1,0 +1,62 @@
+{
+ "id": 1679,
+ "date": "2026-11-05",
+ "formula_version": "2026-09-18",
+ "prompt_version": "2026-09-18",
+ "model": "gemini-3.6-flash",
+ "answer_b64": "7KCA66CH64uk",
+ "first_score": 56.32,
+ "fairness": 1.0,
+ "probe": 0.4,
+ "q_reach": 0.4,
+ "q_path": 0.264,
+ "probe_ranks": [
+  151,
+  1,
+  3,
+  null,
+  null,
+  null,
+  null,
+  null
+ ],
+ "probe_n": 8,
+ "probe_words_b64": "6re466CH64ukLOydtOugh+uLpCzslrTrlrvri6Qs7IOB7YOcLOuqqOyKtSzsg4Htmaks7KCA6riwLOupgOuLpA==",
+ "broken": false,
+ "semantic_match": 5,
+ "semantic_match_eff": 5,
+ "matched_ranks": [
+  1,
+  3,
+  4,
+  5,
+  7
+ ],
+ "direct_ranks": [
+  1,
+  3
+ ],
+ "kept_ranks": [
+  1,
+  3,
+  4,
+  5,
+  7
+ ],
+ "echo_ranks": [],
+ "self_echo": 0,
+ "pos_b64": "7ZiV7Jqp7IKs",
+ "q_match": 0.608,
+ "weighted_ratio": 0.57,
+ "q_word": 1.0,
+ "playable": 44,
+ "grade": "yellow",
+ "weakest": "reach",
+ "reduced": false,
+ "dead_cards": [],
+ "outcome": null,
+ "fairness_reason_b64": "7ZiE64yAIO2VnOq1reyWtOyXkOyEnCDrp6TsmrAg67O07Y647KCB7Jy866GcIOyCrOyaqe2VmOuKlCDsp4Dsi5ztmJXsmqnsgqzroZwg7KCV64u1IOy2nOygnOyXkCDslYTrrLTrn7Ag66y47KCc6rCAIOyXhuuLpC4=",
+ "probe_reason_b64": "64uo7Ja0IOyekOyytOuKlCDsiazsmrDrgpgg7YOQ7IOJIOqzvOygleyXkOyEnCDsp4Dsi5ztmJXsmqnsgqzrpbwg7Jqw7ISg7KCB7Jy866GcIOuWoOyYrOugpCDsnoXroKXtlZjquLDripQg64uk7IaMIOyWtOugteuLpC4=",
+ "match_reason_b64": "MeychCAn7J2066CH64ukJ+yZgCAz7JyEICfslrTrlrvri6QnIOqwmeydgCDsp4Dsi5ztmJXsmqnsgqwg7Ja07ZyY6rCAIOyDgeychOyXkCDrqoXtmZXtnogg7KG07J6s7ZWY66mwICfqsIDtg4DrtoDtg4AnLCAn7JmI6rCA7JmI67aAJyDrk7Eg6rSA7Jqp7KCBIOyXsOq0gOyWtOuPhCDtlajqu5gg65Ox7J6l7ZWc64ukLg==",
+ "built_at": "2026-11-05T06:06:49+09:00"
+}
